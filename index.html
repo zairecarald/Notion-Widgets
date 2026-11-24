@@ -49,7 +49,7 @@
   .daybar i{display:block;height:100%;background:var(--accent);width:0;transition:width 1s linear}
 
   .bars{display:grid;gap:10px;margin-bottom:24px}
-  .bar{display:grid;grid-template-columns:78px 1fr 160px;gap:12px;align-items:center;font-size:12px}
+  .bar{display:grid;grid-template-columns:78px 1fr 118px;gap:12px;align-items:center;font-size:12px}
   .bar label{color:var(--muted);letter-spacing:1px}
   .track{height:16px;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:transparent}
   .track i{display:block;height:100%;width:0;background:var(--bar);transition:width 1s linear}
@@ -287,10 +287,10 @@ function tick(){
   const frac = (a, b) => (n - a) / (b - a);
   const daysLeft = (end) => Math.ceil((end - n) / DAY_MS);
 
-  setBar("day", frac(dayStart, dayEnd), "faltan " + dur(dayEnd - n));
-  setBar("week", frac(wkStart, wkEnd), "faltan " + daysLeft(wkEnd) + " d");
-  setBar("month", frac(moStart, moEnd), "faltan " + daysLeft(moEnd) + " d");
-  setBar("year", frac(yrStart, yrEnd), "faltan " + daysLeft(yrEnd) + " d");
+  setBar("day", frac(dayStart, dayEnd), dur(dayEnd - n));
+  setBar("week", frac(wkStart, wkEnd), daysLeft(wkEnd) + "d");
+  setBar("month", frac(moStart, moEnd), daysLeft(moEnd) + "d");
+  setBar("year", frac(yrStart, yrEnd), daysLeft(yrEnd) + "d");
 
   const a = ageParts(birth, n);
   const totalDays = Math.floor((n - birth) / DAY_MS);

@@ -9,7 +9,7 @@
   :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
-  main{max-width:420px;margin:0 auto;padding:16px}
+  main{max-width:420px;margin:0;padding:12px 16px}
   .card{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:18px;text-align:center}
   .modes{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
   .modes button{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:20px;
@@ -30,8 +30,8 @@
   <div class="card">
     <div class="modes">
       <button data-m="focus" class="on">Pomodoro</button>
-      <button data-m="short">Descanso corto</button>
-      <button data-m="long">Descanso largo</button>
+      <button data-m="short">Corto</button>
+      <button data-m="long">Largo</button>
     </div>
     <div id="time">25:00</div>
     <div class="track"><i id="prog"></i></div>

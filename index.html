@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>home · cabecera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ====== PALETA (cámbiala aquí) ====== */
+  :root{
+    --bg:#191919;        /* fondo, igual que el modo oscuro de Notion */
+    --panel:#202020;
+    --line:#3a3a38;
+    --text:#e8e6df;
+    --muted:#8d8b84;
+    --bar:#c4c2ac;       /* relleno de las barras */
+    --accent:#529cca;    /* azul de acento */
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+  main{max-width:880px;margin:0 auto;padding:20px 16px 28px}
+
+  #greet{font-weight:800;font-size:clamp(22px,4.6vw,38px);line-height:1.2;letter-spacing:-.5px;cursor:pointer;
+         padding-left:14px;border-left:3px solid var(--text);margin-bottom:6px}
+  .hint{color:var(--muted);font-size:11px;margin:0 0 26px 17px}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:26px}
+  @media(max-width:640px){.row{grid-template-columns:1fr;gap:20px}}
+
+  .clock{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .unit{display:flex;flex-direction:column;align-items:center}
+  .unit b{font-size:clamp(34px,7vw,52px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .unit small{font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-top:6px;font-weight:500}
+  .date{width:100%;color:var(--muted);font-size:13px;margin-top:2px;text-transform:lowercase}
+
+  .sun{border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:14px 16px}
+  .sun-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+  .sun-top span{color:var(--muted);font-size:11px;letter-spacing:1.5px}
+  select{background:var(--bg);color:var(--accent);border:1px solid var(--line);border-radius:4px;
+         font:inherit;font-size:12px;padding:3px 6px;font-weight:700;cursor:pointer}
+  .sun-times{display:flex;gap:26px;margin-bottom:10px}
+  .sun-times div{display:flex;flex-direction:column}
+  .sun-times small{font-size:10px;letter-spacing:1.5px;color:var(--muted)}
+  .sun-times b{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  #sunline{color:var(--muted);font-size:12px}
+  .daybar{height:6px;border-radius:3px;background:var(--bg);border:1px solid var(--line);margin:10px 0 8px;overflow:hidden}
+  .daybar i{display:block;height:100%;background:var(--accent);width:0;transition:width 1s linear}
+
+  .bars{display:grid;gap:10px;margin-bottom:24px}
+  .bar{display:grid;grid-template-columns:78px 1fr 112px;gap:12px;align-items:center;font-size:12px}
+  .bar label{color:var(--muted);letter-spacing:1px}
+  .track{height:16px;border:1.5px solid var(--line);border-radius:6px;overflow:hidden;background:transparent}
+  .track i{display:block;height:100%;width:0;background:var(--bar);transition:width 1s linear}
+  .bar span{text-align:right;font-variant-numeric:tabular-nums}
+  @media(max-width:480px){.bar{grid-template-columns:60px 1fr 86px;gap:8px;font-size:11px}}
+
+  .age{border-top:1px solid var(--line);padding-top:16px;display:grid;gap:5px}
+  .age .l{color:var(--muted);font-size:10px;letter-spacing:1.5px}
+  .age b{font-size:clamp(15px,3vw,20px);font-weight:700;font-variant-numeric:tabular-nums}
+  .age p{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="greet" title="clic para otro saludo"></h1>
+  <p class="hint">clic en el saludo para cambiarlo</p>
+
+  <section class="row">
+    <div class="clock">
+      <div class="unit"><b id="hh">00</b><small>HORAS</small></div>
+      <div class="unit"><b id="mm">00</b><small>MIN</small></div>
+      <div class="unit"><b id="ss">00</b><small>SEG</small></div>
+      <div class="date" id="date"></div>
+    </div>
+
+    <div class="sun">
+      <div class="sun-top"><span>SOL EN</span><select id="place"></select></div>
+      <div class="sun-times">
+        <div><small>AMANECER</small><b id="rise">--:--</b></div>
+        <div><small>ATARDECER</small><b id="set">--:--</b></div>
+        <div><small>LUZ</small><b id="len">--</b></div>
+      </div>
+      <div class="daybar"><i id="sunprog"></i></div>
+      <div id="sunline"></div>
+    </div>
+  </section>
+
+  <section class="bars">
+    <div class="bar"><label>DÍA</label><div class="track"><i id="b-day"></i></div><span id="t-day"></span></div>
+    <div class="bar"><label>SEMANA</label><div class="track"><i id="b-week"></i></div><span id="t-week"></span></div>
+    <div class="bar"><label>MES</label><div class="track"><i id="b-month"></i></div><span id="t-month"></span></div>
+    <div class="bar"><label>AÑO</label><div class="track"><i id="b-year"></i></div><span id="t-year"></span></div>
+  </section>
+
+  <section class="age">
+    <div class="l">EDAD</div>
+    <b id="age1"></b>
+    <p id="age2"></p>
+    <p id="age3"></p>
+  </section>
+</main>
+
+<script>
+/* =====================================================================
+   CONFIGURACIÓN: lo único que normalmente tendrás que tocar está aquí
+   ===================================================================== */
+const CONFIG = {
+  name: "Zaire",
+  birth: [2006, 9, 27],            // [año, mes, día]
+  defaultPlace: "Sevilla",
+  places: {                         // nombre: [latitud, longitud]
+    "Sevilla":   [37.3891, -5.9845],
+    "Bollullos": [37.3386, -6.5400],
+    "Barcelona": [41.3874,  2.1686],
+    "Cubelles":  [41.2083,  1.6742]
+  }
+};
+
+/* Saludos por franja horaria. {name} se sustituye por tu nombre.
+   Añade o quita frases libremente. */
+const GREETINGS = {
+  madrugada: [   // 00:00 - 05:59
+    "The moon’s your copilot, {name}",
+    "Still up, {name}? The night shift suits you",
+    "Midnight thoughts hit different, {name}",
+    "The stars are on your payroll tonight, {name}",
+    "Quiet hours, loud ideas, {name}",
+    "The world is asleep. You’re the main character, {name}",
+    "Even the moon is yawning, {name}",
+    "Night owl mode: activated, {name}"
+  ],
+  manana: [      // 06:00 - 11:59
+    "Rise and conquer, {name}",
+    "The sun clocked in early for you, {name}",
+    "Fresh day, fresh save file, {name}",
+    "Good morning, {name}. The world is mildly ready",
+    "Coffee first, destiny second, {name}",
+    "New quest unlocked, {name}",
+    "The day is a blank page, {name}",
+    "Wake up and be mildly legendary, {name}"
+  ],
+  mediodia: [    // 12:00 - 15:59
+    "High noon, {name}. Make it count",
+    "The sun is at its peak and so are you, {name}",
+    "Refuel, {name}. Heroes eat lunch too",
+    "Halfway through the day, {name}. Keep the momentum",
+    "Lunch break loading, {name}",
+    "Main quest continues, {name}",
+    "Midday already? Time flies when you’re winning, {name}"
+  ],
+  tarde: [       // 16:00 - 20:59
+    "Golden hour has your name on it, {name}",
+    "Still plenty of daylight to use, {name}",
+    "The sun is leaning on the horizon, {name}",
+    "Sidequests are optional, {name}. The vibes are not",
+    "The day is winding down, you’re not, {name}",
+    "Soft light, sharp mind, {name}",
+    "Evening, {name}. One more good move?"
+  ],
+  noche: [       // 21:00 - 23:59
+    "Time to power down the engines, {name}",
+    "The night is young and so are you, {name}",
+    "Lights low, mind high, {name}",
+    "Welcome back to the calm, {name}",
+    "Close the day like a legend, {name}",
+    "The moon is clocking in, {name}",
+    "Good night soon, {name}. You earned it"
+  ]
+};
+
+/* ============================ SOL (SunCalc) ============================ */
+// SUN-START
+const RAD = Math.PI / 180, DAY_MS = 864e5, J1970 = 2440588, J2000 = 2451545, OBLIQ = RAD * 23.4397, J0 = 0.0009;
+const toJulian = d => d.valueOf() / DAY_MS - 0.5 + J1970;
+const fromJulian = j => new Date((j + 0.5 - J1970) * DAY_MS);
+const toDays = d => toJulian(d) - J2000;
+const solarMeanAnomaly = d => RAD * (357.5291 + 0.98560028 * d);
+function eclipticLongitude(M){
+  const C = RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+  return M + C + RAD * 102.9372 + Math.PI;
+}
+const declination = L => Math.asin(Math.sin(OBLIQ) * Math.sin(L));
+const julianCycle = (d, lw) => Math.round(d - J0 - lw / (2 * Math.PI));
+const approxTransit = (Ht, lw, n) => J0 + (Ht + lw) / (2 * Math.PI) + n;
+const solarTransitJ = (ds, M, L) => J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+const hourAngle = (h, phi, d) => Math.acos((Math.sin(h) - Math.sin(phi) * Math.sin(d)) / (Math.cos(phi) * Math.cos(d)));
+function sunTimes(date, lat, lng){
+  const lw = RAD * -lng, phi = RAD * lat, d = toDays(date), n = julianCycle(d, lw),
+        ds = approxTransit(0, lw, n), M = solarMeanAnomaly(ds), L = eclipticLongitude(M),
+        dec = declination(L), Jnoon = solarTransitJ(ds, M, L);
+  const w = hourAngle(-0.833 * RAD, phi, dec);
+  const Jset = solarTransitJ(approxTransit(w, lw, n), M, L);
+  const Jrise = Jnoon - (Jset - Jnoon);
+  return { rise: fromJulian(Jrise), set: fromJulian(Jset) };
+}
+// SUN-END
+
+/* ============================ UTILIDADES ============================ */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const nf = new Intl.NumberFormat("es-ES");
+const hm = d => pad(d.getHours()) + ":" + pad(d.getMinutes());
+function dur(ms){
+  const m = Math.max(0, Math.round(ms / 60000));
+  return Math.floor(m / 60) + "h " + pad(m % 60) + "m";
+}
+function safeGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function safeSet(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+
+/* ============================ SALUDO ============================ */
+function slot(h){
+  return h < 6 ? "madrugada" : h < 12 ? "manana" : h < 16 ? "mediodia" : h < 21 ? "tarde" : "noche";
+}
+let greetOffset = 0;
+function showGreeting(){
+  const now = new Date(), list = GREETINGS[slot(now.getHours())];
+  // Misma frase durante toda la hora; cambia al cambiar de hora o al hacer clic
+  const seed = now.getFullYear() * 1000 + (now.getMonth() * 31 + now.getDate()) * 24 + now.getHours();
+  const i = (seed * 7 + greetOffset) % list.length;
+  $("greet").textContent = list[i].replace("{name}", CONFIG.name);
+}
+$("greet").addEventListener("click", () => { greetOffset++; showGreeting(); });
+
+/* ============================ SOL UI ============================ */
+const sel = $("place");
+Object.keys(CONFIG.places).forEach(p => {
+  const o = document.createElement("option"); o.value = o.textContent = p; sel.appendChild(o);
+});
+const qp = new URLSearchParams(location.search).get("loc");
+sel.value = (qp && CONFIG.places[qp]) ? qp : (CONFIG.places[safeGet("place")] ? safeGet("place") : CONFIG.defaultPlace);
+sel.addEventListener("change", () => { safeSet("place", sel.value); renderSun(); });
+
+function renderSun(){
+  const [lat, lng] = CONFIG.places[sel.value], now = new Date();
+  const noon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+  const t = sunTimes(noon, lat, lng);
+  $("rise").textContent = hm(t.rise);
+  $("set").textContent = hm(t.set);
+  $("len").textContent = dur(t.set - t.rise);
+  let line, prog;
+  if (now < t.rise){
+    line = "amanece en " + dur(t.rise - now); prog = 0;
+  } else if (now < t.set){
+    line = "atardece en " + dur(t.set - now); prog = (now - t.rise) / (t.set - t.rise);
+  } else {
+    const tm = sunTimes(new Date(noon.getTime() + DAY_MS), lat, lng);
+    line = "es de noche · amanece a las " + hm(tm.rise); prog = 1;
+  }
+  $("sunline").textContent = line;
+  $("sunprog").style.width = (prog * 100).toFixed(1) + "%";
+}
+
+/* ============================ RELOJ, BARRAS, EDAD ============================ */
+const DAYS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const birth = new Date(CONFIG.birth[0], CONFIG.birth[1] - 1, CONFIG.birth[2]);
+
+function setBar(key, p, extra){
+  p = Math.min(1, Math.max(0, p));
+  $("b-" + key).style.width = (p * 100).toFixed(2) + "%";
+  $("t-" + key).textContent = Math.floor(p * 100) + "%" + (extra ? " · " + extra : "");
+}
+function ageParts(b, n){
+  let y = n.getFullYear() - b.getFullYear(), m = n.getMonth() - b.getMonth(), d = n.getDate() - b.getDate();
+  if (d < 0){ m--; d += new Date(n.getFullYear(), n.getMonth(), 0).getDate(); }
+  if (m < 0){ y--; m += 12; }
+  return { y, m, d };
+}
+const plural = (n, s, p) => n + " " + (n === 1 ? s : p);
+
+function tick(){
+  const n = new Date();
+  $("hh").textContent = pad(n.getHours());
+  $("mm").textContent = pad(n.getMinutes());
+  $("ss").textContent = pad(n.getSeconds());
+  $("date").textContent = DAYS[n.getDay()] + " · " + n.getDate() + " " + MONTHS[n.getMonth()] + " " + n.getFullYear();
+
+  const y = n.getFullYear(), m = n.getMonth();
+  const dayStart = new Date(y, m, n.getDate());
+  const dayEnd = new Date(y, m, n.getDate() + 1);
+  const dow = (n.getDay() + 6) % 7;                       // lunes = 0
+  const wkStart = new Date(y, m, n.getDate() - dow), wkEnd = new Date(y, m, n.getDate() - dow + 7);
+  const moStart = new Date(y, m, 1), moEnd = new Date(y, m + 1, 1);
+  const yrStart = new Date(y, 0, 1), yrEnd = new Date(y + 1, 0, 1);
+  const frac = (a, b) => (n - a) / (b - a);
+  const daysLeft = (end) => Math.ceil((end - n) / DAY_MS);
+
+  setBar("day", frac(dayStart, dayEnd), "faltan " + dur(dayEnd - n));
+  setBar("week", frac(wkStart, wkEnd), "faltan " + daysLeft(wkEnd) + " d");
+  setBar("month", frac(moStart, moEnd), "faltan " + daysLeft(moEnd) + " d");
+  setBar("year", frac(yrStart, yrEnd), "faltan " + daysLeft(yrEnd) + " d");
+
+  const a = ageParts(birth, n);
+  const totalDays = Math.floor((n - birth) / DAY_MS);
+  $("age1").textContent = plural(a.y, "año", "años") + " · " + plural(a.m, "mes", "meses") + " · " + plural(a.d, "día", "días");
+  $("age2").textContent = nf.format(a.y * 12 + a.m) + " meses · " + nf.format(Math.floor(totalDays / 7)) + " semanas · " + nf.format(totalDays) + " días";
+  let next = new Date(y, birth.getMonth(), birth.getDate());
+  if (next < dayStart) next = new Date(y + 1, birth.getMonth(), birth.getDate());
+  const toNext = Math.round((next - dayStart) / DAY_MS);
+  $("age3").textContent = toNext === 0 ? "hoy es tu cumpleaños" : "próximo cumple en " + toNext + " días";
+}
+
+let lastMinute = -1, lastHour = -1;
+function loop(){
+  tick();
+  const n = new Date();
+  if (n.getMinutes() !== lastMinute){ lastMinute = n.getMinutes(); renderSun(); }
+  if (n.getHours() !== lastHour){ lastHour = n.getHours(); greetOffset = 0; showGreeting(); }
+}
+loop();
+setInterval(loop, 1000);
+</script>
+</body>
+</html>

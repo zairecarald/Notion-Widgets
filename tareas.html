@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>home · tareas</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ====== PALETA (la misma que el resto de widgets) ====== */
+  :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca;--warn:#d4907c;color-scheme:dark}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+  main{padding:12px 16px;display:grid;gap:14px;max-width:560px}
+  .card{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:14px 16px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  h2{font-size:11px;letter-spacing:2px;font-weight:700;color:var(--muted)}
+  .new{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:14px;font:inherit;font-size:10px;letter-spacing:1px;padding:3px 10px;cursor:pointer}
+  .new:hover{border-color:var(--muted)}
+  form{display:none;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  form.open{display:flex}
+  input[type=text]{flex:1;min-width:140px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:12px;padding:6px 8px;outline:none}
+  input[type=text]:focus,input[type=date]:focus{border-color:var(--accent)}
+  input[type=date]{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:12px;padding:5px 6px;outline:none}
+  form button{background:var(--text);color:var(--bg);border:0;border-radius:5px;font:inherit;font-weight:800;font-size:12px;padding:6px 12px;cursor:pointer}
+  ul{list-style:none;display:grid;gap:2px}
+  li{display:flex;align-items:center;gap:10px;font-size:13px;padding:5px 2px;border-radius:4px}
+  li:hover{background:rgba(255,255,255,.035)}
+  li .txt{flex:1;word-break:break-word;line-height:1.35}
+  .box{appearance:none;width:15px;height:15px;border:1.5px solid var(--muted);border-radius:3px;cursor:pointer;flex:none;display:grid;place-content:center;background:transparent}
+  .box:checked{background:var(--accent);border-color:var(--accent)}
+  .box:checked::after{content:"";width:4px;height:8px;border:solid var(--bg);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+  li.done .txt{text-decoration:line-through;color:var(--muted)}
+  .dot{width:5px;height:5px;border-radius:50%;background:var(--bar);flex:none;margin:0 5px}
+  .when{font-size:11px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .when.today{color:var(--accent);font-weight:700}
+  .when.late{color:var(--warn)}
+  .x{background:transparent;border:0;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;opacity:.35;padding:0 4px}
+  li:hover .x{opacity:1}
+  .empty{font-size:11px;color:var(--muted);padding:4px 2px}
+  .foot{margin-top:8px;font-size:10px;color:var(--muted);letter-spacing:1px}
+  .foot button{background:transparent;border:0;color:var(--muted);font:inherit;font-size:10px;letter-spacing:1px;cursor:pointer;text-decoration:underline}
+  #warn{display:none;font-size:10px;color:var(--warn)}
+</style>
+</head>
+<body>
+<main>
+  <section class="card">
+    <header><h2>MINI TO-DO</h2><button class="new" id="todo-new">+ NUEVO</button></header>
+    <form id="todo-form">
+      <input type="text" id="todo-text" placeholder="nueva tarea" maxlength="120" autocomplete="off">
+      <button type="submit">OK</button>
+    </form>
+    <ul id="todo-list"></ul>
+    <div class="foot" id="todo-foot"></div>
+  </section>
+
+  <section class="card">
+    <header><h2>REMINDERS</h2><button class="new" id="rem-new">+ NUEVO</button></header>
+    <form id="rem-form">
+      <input type="text" id="rem-text" placeholder="nuevo recordatorio" maxlength="120" autocomplete="off">
+      <input type="date" id="rem-date">
+      <button type="submit">OK</button>
+    </form>
+    <ul id="rem-list"></ul>
+  </section>
+  <div id="warn">este navegador no deja guardar datos aquí: lo que añadas se perderá al recargar</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+let storageOK = true;
+function load(k){ try { return JSON.parse(localStorage.getItem(k)) || []; } catch(e){ storageOK = false; return []; } }
+function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){ storageOK = false; $("warn").style.display = "block"; } }
+try { localStorage.setItem("home-test", "1"); localStorage.removeItem("home-test"); } catch(e){ storageOK = false; $("warn").style.display = "block"; }
+
+let todos = load("home-todo"), rems = load("home-rem");
+
+function toggleForm(form, input){
+  const open = !form.classList.contains("open");
+  form.classList.toggle("open", open);
+  if (open) input.focus();
+}
+$("todo-new").onclick = () => toggleForm($("todo-form"), $("todo-text"));
+$("rem-new").onclick = () => toggleForm($("rem-form"), $("rem-text"));
+[["todo-form","todo-text"],["rem-form","rem-text"]].forEach(([f, i]) =>
+  $(i).addEventListener("keydown", e => { if (e.key === "Escape") $(f).classList.remove("open"); }));
+
+$("todo-form").onsubmit = e => {
+  e.preventDefault();
+  const t = $("todo-text").value.trim();
+  if (!t) return;
+  todos.push({ id: uid(), text: t, done: false });
+  $("todo-text").value = "";
+  save("home-todo", todos); renderTodos();
+};
+$("rem-form").onsubmit = e => {
+  e.preventDefault();
+  const t = $("rem-text").value.trim();
+  if (!t) return;
+  rems.push({ id: uid(), text: t, date: $("rem-date").value || "" });
+  $("rem-text").value = ""; $("rem-date").value = "";
+  save("home-rem", rems); renderRems();
+};
+
+function renderTodos(){
+  const ul = $("todo-list"); ul.textContent = "";
+  const sorted = [...todos].sort((a, b) => a.done - b.done);
+  if (!sorted.length){
+    const d = document.createElement("div"); d.className = "empty"; d.textContent = "nada pendiente";
+    ul.appendChild(d);
+  }
+  sorted.forEach(t => {
+    const li = document.createElement("li"); if (t.done) li.className = "done";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "box"; cb.checked = t.done;
+    cb.onchange = () => { t.done = cb.checked; save("home-todo", todos); renderTodos(); };
+    const sp = document.createElement("span"); sp.className = "txt"; sp.textContent = t.text;
+    const x = document.createElement("button"); x.className = "x"; x.textContent = "×"; x.title = "borrar";
+    x.onclick = () => { todos = todos.filter(o => o.id !== t.id); save("home-todo", todos); renderTodos(); };
+    li.append(cb, sp, x); ul.appendChild(li);
+  });
+  const foot = $("todo-foot"); foot.textContent = "";
+  const doneN = todos.filter(t => t.done).length;
+  if (doneN){
+    const b = document.createElement("button"); b.textContent = "limpiar hechas (" + doneN + ")";
+    b.onclick = () => { todos = todos.filter(t => !t.done); save("home-todo", todos); renderTodos(); };
+    foot.appendChild(b);
+  }
+}
+
+const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function whenLabel(iso){
+  const [y, m, d] = iso.split("-").map(Number);
+  const target = new Date(y, m - 1, d), now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.round((target - today) / 864e5);
+  const date = d + " " + MONTHS[m - 1];
+  if (diff === 0) return { text: "hoy", cls: "today" };
+  if (diff === 1) return { text: "mañana · " + date, cls: "" };
+  if (diff < 0) return { text: date + " · pasado", cls: "late" };
+  if (diff < 8) return { text: date + " · en " + diff + "d", cls: "" };
+  return { text: date, cls: "" };
+}
+function renderRems(){
+  const ul = $("rem-list"); ul.textContent = "";
+  const sorted = [...rems].sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999"));
+  if (!sorted.length){
+    const d = document.createElement("div"); d.className = "empty"; d.textContent = "sin recordatorios";
+    ul.appendChild(d);
+  }
+  sorted.forEach(r => {
+    const li = document.createElement("li");
+    const dot = document.createElement("span"); dot.className = "dot";
+    const sp = document.createElement("span"); sp.className = "txt"; sp.textContent = r.text;
+    li.append(dot, sp);
+    if (r.date){
+      const w = whenLabel(r.date), s = document.createElement("span");
+      s.className = "when " + w.cls; s.textContent = w.text; li.appendChild(s);
+    }
+    const x = document.createElement("button"); x.className = "x"; x.textContent = "×"; x.title = "borrar";
+    x.onclick = () => { rems = rems.filter(o => o.id !== r.id); save("home-rem", rems); renderRems(); };
+    li.appendChild(x); ul.appendChild(li);
+  });
+}
+renderTodos(); renderRems();
+setInterval(renderRems, 60000);
+</script>
+</body>
+</html>

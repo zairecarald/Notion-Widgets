@@ -1,68 +1,79 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>home · pomodoro</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
+  /* ====== PALETTE (same as the other widgets) ====== */
   :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
-  main{max-width:420px;margin:0;padding:12px 16px}
-  .card{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:18px;text-align:center}
-  .modes{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
-  .modes button{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:20px;
-                font:inherit;font-size:12px;padding:5px 12px;cursor:pointer}
+  main{padding:12px 16px 18px}
+
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;min-height:25px}
+  .top h2{font-size:11px;letter-spacing:2px;font-weight:700;color:var(--muted)}
+
+  .card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px 14px 14px;text-align:center}
+  .modes{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+  .modes button{min-width:58px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:20px;
+                font:inherit;font-size:12px;padding:5px 14px;cursor:pointer}
+  .modes button:hover{border-color:var(--muted)}
   .modes button.on{color:var(--bg);background:var(--text);border-color:var(--text);font-weight:700}
   #time{font-size:clamp(54px,18vw,84px);font-weight:800;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums}
   .track{height:6px;border-radius:3px;border:1px solid var(--line);margin:16px 0;overflow:hidden}
   .track i{display:block;height:100%;width:0;background:var(--bar);transition:width .5s linear}
   .ctrl{display:flex;gap:10px;justify-content:center;align-items:center}
   .ctrl button{font:inherit;cursor:pointer;border-radius:6px}
-  #go{background:var(--text);color:var(--bg);border:0;font-weight:800;font-size:15px;padding:9px 30px}
+  #go{background:var(--text);color:var(--bg);border:0;font-weight:800;font-size:15px;padding:9px 30px;min-width:104px}
   #reset{background:transparent;color:var(--text);border:1px solid var(--line);font-size:15px;padding:8px 12px}
   .meta{margin-top:14px;font-size:11px;color:var(--muted);letter-spacing:1px}
 </style>
 </head>
 <body>
 <main>
+  <div class="top"><h2>POMODORO</h2></div>
   <div class="card">
-    <div class="modes">
-      <button data-m="focus" class="on">Pomodoro</button>
-      <button data-m="short">Corto</button>
-      <button data-m="long">Largo</button>
-    </div>
-    <div id="time">25:00</div>
+    <div class="modes" id="modes"></div>
+    <div id="time">20:00</div>
     <div class="track"><i id="prog"></i></div>
-    <div class="ctrl"><button id="go">Start</button><button id="reset" title="reiniciar">↺</button></div>
-    <div class="meta" id="meta">SESIONES HOY: 0</div>
+    <div class="ctrl"><button id="go">Start</button><button id="reset" title="reset">&#8634;</button></div>
+    <div class="meta" id="meta">SESSIONS TODAY: 0</div>
   </div>
 </main>
 
 <script>
-/* Duraciones en minutos. Puedes cambiarlas aquí, o en la URL: pomodoro.html?p=50&s=10&l=20 */
+/* Durations in minutes. Change them here, or in the URL: pomodoro.html?d=15,25,45 */
 const q = new URLSearchParams(location.search);
-const MODES = {
-  focus: { min: +q.get("p") || 25, label: "Pomodoro" },
-  short: { min: +q.get("s") || 5,  label: "Descanso corto" },
-  long:  { min: +q.get("l") || 15, label: "Descanso largo" }
-};
+const fromUrl = (q.get("d") || "").split(",").map(Number).filter(n => n > 0);
+const DURATIONS = fromUrl.length === 3 ? fromUrl : [10, 20, 30];
+
 const $ = s => document.querySelector(s);
 const pad = n => String(n).padStart(2, "0");
 const today = new Date().toISOString().slice(0, 10);
 function get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function set(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
 
-let mode = "focus", total = MODES.focus.min * 60, left = total, endAt = null, timer = null;
+let idx = DURATIONS.indexOf(+get("pomo-min"));
+if (idx < 0) idx = 1;
+let total = DURATIONS[idx] * 60, left = total, endAt = null, timer = null;
 let done = get("pomo-date") === today ? +get("pomo-count") || 0 : 0;
+
+DURATIONS.forEach((m, i) => {
+  const b = document.createElement("button");
+  b.textContent = m; b.title = m + " minutes";
+  b.onclick = () => pick(i);
+  $("#modes").appendChild(b);
+});
 
 function render(){
   $("#time").textContent = pad(Math.floor(left / 60)) + ":" + pad(left % 60);
   $("#prog").style.width = ((total - left) / total * 100) + "%";
   $("#go").textContent = timer ? "Pause" : (left < total ? "Resume" : "Start");
-  $("#meta").textContent = "SESIONES HOY: " + done;
-  document.title = (timer ? pad(Math.floor(left / 60)) + ":" + pad(left % 60) + " · " : "") + MODES[mode].label;
+  $("#meta").textContent = "SESSIONS TODAY: " + done;
+  document.querySelectorAll(".modes button").forEach((b, i) => b.classList.toggle("on", i === idx));
+  document.title = (timer ? pad(Math.floor(left / 60)) + ":" + pad(left % 60) + " · " : "") + "pomodoro";
 }
 function beep(){
   try {
@@ -79,12 +90,12 @@ function beep(){
 function stop(){ clearInterval(timer); timer = null; }
 function finish(){
   stop(); beep();
-  if (mode === "focus"){ done++; set("pomo-date", today); set("pomo-count", done); }
-  switchMode(mode === "focus" ? (done % 4 === 0 ? "long" : "short") : "focus");
+  done++; set("pomo-date", today); set("pomo-count", done);
+  left = total; render();
 }
-function switchMode(m){
-  stop(); mode = m; total = left = MODES[m].min * 60;
-  document.querySelectorAll(".modes button").forEach(b => b.classList.toggle("on", b.dataset.m === m));
+function pick(i){
+  stop(); idx = i; total = left = DURATIONS[i] * 60;
+  set("pomo-min", DURATIONS[i]);
   render();
 }
 function start(){
@@ -98,7 +109,6 @@ function start(){
 }
 $("#go").onclick = () => timer ? (stop(), render()) : start();
 $("#reset").onclick = () => { stop(); left = total; render(); };
-document.querySelectorAll(".modes button").forEach(b => b.onclick = () => switchMode(b.dataset.m));
 render();
 </script>
 </body>

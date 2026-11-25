@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>home · hábitos</title>
+<title>home · habits</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ====== PALETA (la misma que el resto de widgets) ====== */
+  /* ====== PALETTE (same as the other widgets) ====== */
   :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca;--warn:#d4907c;color-scheme:dark}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
@@ -18,7 +18,7 @@
   .pill:hover{border-color:var(--muted)}
   .pill.danger{color:var(--warn);border-color:var(--warn)}
 
-  /* formulario */
+  /* form */
   .form{display:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px;margin-bottom:12px;gap:10px;flex-direction:column}
   .form.open{display:flex}
   .form label{font-size:10px;letter-spacing:1.5px;color:var(--muted)}
@@ -33,7 +33,7 @@
   .btn{background:var(--text);color:var(--bg);border:0;border-radius:5px;font:inherit;font-weight:800;font-size:12px;padding:7px 14px;cursor:pointer}
   .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
 
-  /* tarjetas */
+  /* cards */
   #list{display:grid;gap:12px}
   .card{--c:#8e8bf0;border:1px solid color-mix(in srgb,var(--c) 22%,var(--line));border-radius:12px;
         background:color-mix(in srgb,var(--c) 7%,var(--panel));padding:14px}
@@ -59,7 +59,7 @@
   .chip.n{background:color-mix(in srgb,var(--text) 7%,var(--bg));color:var(--muted);font-weight:500}
   .chip.ok{color:var(--c)}
 
-  /* detalle */
+  /* detail */
   .detail{display:none;margin-top:14px;border-top:1px solid color-mix(in srgb,var(--c) 18%,var(--line));padding-top:14px}
   .detail.open{display:block}
   .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
@@ -88,44 +88,47 @@
 </head>
 <body>
 <main>
-  <div class="top"><h2>HÁBITOS</h2><button class="pill" id="new">+ NUEVO</button></div>
+  <div class="top"><h2>HABITS</h2><button class="pill" id="new">+ NEW</button></div>
 
   <form class="form" id="form" autocomplete="off">
     <div class="row">
-      <div style="flex:2"><label>NOMBRE</label><input type="text" id="f-name" maxlength="30" placeholder="p. ej. Italiano"></div>
-      <div><label>META POR SEMANA</label>
+      <div style="flex:2"><label>NAME</label><input type="text" id="f-name" maxlength="30" placeholder="e.g. Italian"></div>
+      <div><label>WEEKLY GOAL</label>
         <select id="f-goal"></select></div>
     </div>
-    <div><label>DESCRIPCIÓN (opcional)</label><input type="text" id="f-desc" maxlength="70" placeholder="p. ej. Al menos 15 minutos"></div>
+    <div><label>DESCRIPTION (optional)</label><input type="text" id="f-desc" maxlength="70" placeholder="e.g. At least 15 minutes"></div>
     <div><label>COLOR</label><div class="swatches" id="f-sw"></div></div>
-    <div class="btns"><button type="submit" class="btn" id="f-save">GUARDAR</button><button type="button" class="btn ghost" id="f-cancel">CANCELAR</button></div>
+    <div class="btns"><button type="submit" class="btn" id="f-save">SAVE</button><button type="button" class="btn ghost" id="f-cancel">CANCEL</button></div>
   </form>
 
   <div id="list"></div>
 
   <div class="foot">
-    <button class="pill" id="bk-toggle">COPIA DE SEGURIDAD</button>
+    <button class="pill" id="bk-toggle">BACKUP</button>
   </div>
   <div class="backup" id="backup">
-    <div class="hint">Copia este texto y guárdalo donde quieras. Para restaurar o pasar tus datos a otro navegador, pégalo aquí y pulsa RESTAURAR.</div>
+    <div class="hint">Copy this text and keep it wherever you like. To restore your data or move it to another browser, paste it here and press RESTORE.</div>
     <textarea id="bk-text" spellcheck="false"></textarea>
-    <div class="btns"><button class="btn ghost" id="bk-restore">RESTAURAR</button><span class="hint" id="bk-msg" style="align-self:center;margin:0"></span></div>
+    <div class="btns"><button class="btn ghost" id="bk-restore">RESTORE</button><span class="hint" id="bk-msg" style="align-self:center;margin:0"></span></div>
   </div>
-  <div id="warn">este navegador no deja guardar datos aquí: lo que marques se perderá al recargar</div>
+  <div id="warn">this browser doesn't allow saving data here: anything you mark will be lost on reload</div>
 </main>
 
 <script>
 /* ===== CONFIG ===== */
-const COLORS = { violeta:"#8e8bf0", ambar:"#e0a35a", cian:"#5cc4dc", verde:"#7fbf8a", rosa:"#d4907c", beige:"#c4c2ac" };
-const WEEKS = 26;                 // semanas que se ven en la cuadrícula
+const COLORS = { violet:"#8e8bf0", amber:"#e0a35a", cyan:"#5cc4dc", green:"#7fbf8a", rose:"#d4907c", beige:"#c4c2ac" };
+const LEGACY_COLORS = { violeta:"violet", ambar:"amber", cian:"cyan", verde:"green", rosa:"rose" };  // names used by older saved data
+const WEEKS = 26;                 // weeks shown in the grid
 const STORE = "home-habits";
 const SEED = [
-  { name:"Idiomas",  desc:"Practicar al menos 15 minutos", goal:5, color:"violeta" },
-  { name:"Lectura",  desc:"Leer un rato cada día",          goal:7, color:"cian"   },
-  { name:"Práctica", desc:"Una skill que quiera mejorar",   goal:3, color:"ambar"  }
+  { name:"Languages", desc:"Practice for at least 15 minutes", goal:5, color:"violet" },
+  { name:"Reading",   desc:"Read for a while every day",       goal:7, color:"cyan"   },
+  { name:"Practice",  desc:"A skill I want to improve",        goal:3, color:"amber"  }
 ];
+// untouched Spanish starter habits from the first version get translated automatically
+const SEED_ES = { "Idiomas|Practicar al menos 15 minutos":0, "Lectura|Leer un rato cada día":1, "Práctica|Una skill que quiera mejorar":2 };
 
-/* ===== utilidades ===== */
+/* ===== utilities ===== */
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, "0");
 const keyOf = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
@@ -133,8 +136,8 @@ const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 
 const dayStart = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const mondayOf = d => addDays(dayStart(d), -((d.getDay() + 6) % 7));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-const DOW = ["L","M","X","J","V","S","D"];
+const MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+const DOW = ["M","T","W","T","F","S","S"];
 let storageOK = true;
 function rd(k){ try { return localStorage.getItem(k); } catch(e){ storageOK = false; return null; } }
 function wr(k, v){ try { localStorage.setItem(k, v); } catch(e){ storageOK = false; $("warn").style.display = "block"; } }
@@ -151,16 +154,25 @@ function el(tag, props, ...kids){
   return e;
 }
 
-/* ===== datos ===== */
+/* ===== data ===== */
 let habits = [];
 function load(){
   let raw = rd(STORE), data = null;
   try { data = raw ? JSON.parse(raw) : null; } catch(e){}
-  if (data && Array.isArray(data.habits)) habits = data.habits;
+  if (data && Array.isArray(data.habits)){ habits = data.habits; if (migrate()) save(); }
   else if (!rd(STORE + "-seeded")){
     habits = SEED.map(s => ({ id: uid(), name: s.name, desc: s.desc, goal: s.goal, color: s.color, days: {} }));
     wr(STORE + "-seeded", "1"); save();
   }
+}
+function migrate(){
+  let changed = false;
+  habits.forEach(h => {
+    if (LEGACY_COLORS[h.color]){ h.color = LEGACY_COLORS[h.color]; changed = true; }
+    const si = SEED_ES[h.name + "|" + h.desc];
+    if (si !== undefined){ h.name = SEED[si].name; h.desc = SEED[si].desc; changed = true; }
+  });
+  return changed;
 }
 function save(){ wr(STORE, JSON.stringify({ v: 1, habits })); }
 try { localStorage.setItem("home-test", "1"); localStorage.removeItem("home-test"); } catch(e){ storageOK = false; $("warn").style.display = "block"; }
@@ -180,7 +192,7 @@ function weekCount(h){
 }
 function total(h){ return Object.keys(h.days).length; }
 
-/* ===== estado de interfaz ===== */
+/* ===== UI state ===== */
 let openId = null, cal = {}, editingId = null;
 function monthOf(h){
   if (!cal[h.id]){ const n = new Date(); cal[h.id] = { y: n.getFullYear(), m: n.getMonth() }; }
@@ -191,7 +203,7 @@ function monthOf(h){
 function render(){
   const list = $("list"); list.textContent = "";
   if (!habits.length){
-    list.appendChild(el("div", { class: "empty", text: "Aún no hay hábitos. Pulsa + NUEVO para crear el primero." }));
+    list.appendChild(el("div", { class: "empty", text: "No habits yet. Press + NEW to create the first one." }));
     return;
   }
   habits.forEach(h => list.appendChild(card(h)));
@@ -199,16 +211,16 @@ function render(){
 
 function card(h){
   const c = el("div", { class: "card" });
-  c.style.setProperty("--c", COLORS[h.color] || COLORS.violeta);
+  c.style.setProperty("--c", COLORS[h.color] || COLORS.violet);
   const tk = keyOf(today());
 
-  const check = el("button", { class: "check" + (h.days[tk] ? " on" : ""), title: h.days[tk] ? "quitar hoy" : "marcar hoy como cumplido",
+  const check = el("button", { class: "check" + (h.days[tk] ? " on" : ""), title: h.days[tk] ? "unmark today" : "mark today as done",
     onclick: () => { toggle(h, tk); } });
   const meta = el("div", { class: "meta", onclick: () => { openId = openId === h.id ? null : h.id; render(); } },
     el("b", { text: h.name }), el("span", { text: h.desc || " " }));
   c.appendChild(el("div", { class: "head" }, el("div", { class: "ico", text: (h.name || "?").trim().charAt(0) }), meta, check));
 
-  // cuadrícula tipo contribuciones: columnas = semanas, filas = lunes a domingo
+  // contribution-style grid: columns = weeks, rows = Monday to Sunday
   const heat = el("div", { class: "heat", onclick: () => { openId = openId === h.id ? null : h.id; render(); } });
   heat.style.gridTemplateColumns = "repeat(" + WEEKS + ",1fr)";
   const start = addDays(mondayOf(new Date()), -(WEEKS - 1) * 7), t = today();
@@ -222,9 +234,9 @@ function card(h){
 
   const wk = weekCount(h), st = streak(h);
   c.appendChild(el("div", { class: "stats" },
-    el("span", { class: "chip", text: "racha " + st }),
-    el("span", { class: "chip n" + (wk >= h.goal ? " ok" : ""), text: wk + " de " + h.goal + " esta semana" }),
-    el("span", { class: "chip n", text: total(h) + " en total" })
+    el("span", { class: "chip", text: "streak " + st }),
+    el("span", { class: "chip n" + (wk >= h.goal ? " ok" : ""), text: wk + " of " + h.goal + " this week" }),
+    el("span", { class: "chip n", text: total(h) + " total" })
   ));
 
   const det = el("div", { class: "detail" + (openId === h.id ? " open" : "") });
@@ -238,8 +250,8 @@ function fillDetail(det, h){
   det.appendChild(el("div", { class: "cal-head" },
     el("b", { text: MONTHS[cm.m] + " " + cm.y }),
     el("div", { class: "nav" },
-      el("button", { text: "<", title: "mes anterior", onclick: () => { cm.m--; if (cm.m < 0){ cm.m = 11; cm.y--; } render(); } }),
-      el("button", { text: ">", title: "mes siguiente", onclick: () => { cm.m++; if (cm.m > 11){ cm.m = 0; cm.y++; } render(); } })
+      el("button", { text: "<", title: "previous month", onclick: () => { cm.m--; if (cm.m < 0){ cm.m = 11; cm.y--; } render(); } }),
+      el("button", { text: ">", title: "next month", onclick: () => { cm.m++; if (cm.m > 11){ cm.m = 0; cm.y++; } render(); } })
     )));
   const grid = el("div", { class: "cal" });
   DOW.forEach(d => grid.appendChild(el("div", { class: "dow", text: d })));
@@ -256,16 +268,16 @@ function fillDetail(det, h){
     grid.appendChild(el("button", { class: cls, text: String(d.getDate()), onclick: fut ? null : () => toggle(h, k) }));
   }
   det.appendChild(grid);
-  det.appendChild(el("div", { class: "hint", text: "Pulsa un día para marcarlo o desmarcarlo." }));
+  det.appendChild(el("div", { class: "hint", text: "Click a day to mark or unmark it." }));
 
   let confirmDel = false;
-  const del = el("button", { class: "pill danger", text: "BORRAR",
+  const del = el("button", { class: "pill danger", text: "DELETE",
     onclick: () => {
-      if (!confirmDel){ confirmDel = true; del.textContent = "SEGURO? PULSA OTRA VEZ"; return; }
+      if (!confirmDel){ confirmDel = true; del.textContent = "SURE? CLICK AGAIN"; return; }
       habits = habits.filter(o => o.id !== h.id); openId = null; save(); render();
     } });
   det.appendChild(el("div", { class: "tools" },
-    el("button", { class: "pill", text: "EDITAR", onclick: () => openForm(h) }), del));
+    el("button", { class: "pill", text: "EDIT", onclick: () => openForm(h) }), del));
 }
 
 function toggle(h, k){
@@ -273,9 +285,9 @@ function toggle(h, k){
   save(); render();
 }
 
-/* ===== formulario ===== */
-for (let i = 1; i <= 7; i++) $("f-goal").appendChild(el("option", { value: i, text: i === 7 ? "7 (todos los días)" : String(i) }));
-let formColor = "violeta";
+/* ===== form ===== */
+for (let i = 1; i <= 7; i++) $("f-goal").appendChild(el("option", { value: i, text: i === 7 ? "7 (every day)" : String(i) }));
+let formColor = "violet";
 function drawSwatches(){
   const box = $("f-sw"); box.textContent = "";
   Object.keys(COLORS).forEach(n => {
@@ -290,7 +302,7 @@ function openForm(h){
   $("f-desc").value = h ? h.desc : "";
   $("f-goal").value = h ? h.goal : 5;
   formColor = h ? h.color : Object.keys(COLORS)[habits.length % Object.keys(COLORS).length];
-  $("f-save").textContent = h ? "ACTUALIZAR" : "GUARDAR";
+  $("f-save").textContent = h ? "UPDATE" : "SAVE";
   drawSwatches();
   $("form").classList.add("open");
   $("f-name").focus();
@@ -309,7 +321,7 @@ $("form").onsubmit = e => {
   save(); closeForm(); render();
 };
 
-/* ===== copia de seguridad ===== */
+/* ===== backup ===== */
 $("bk-toggle").onclick = () => {
   const b = $("backup"), open = !b.classList.contains("open");
   b.classList.toggle("open", open);
@@ -319,16 +331,16 @@ $("bk-restore").onclick = () => {
   try {
     const d = JSON.parse($("bk-text").value);
     if (!d || !Array.isArray(d.habits)) throw new Error("formato");
-    habits = d.habits.map(h => ({ id: h.id || uid(), name: String(h.name || "Hábito"), desc: String(h.desc || ""),
-      goal: Math.min(7, Math.max(1, +h.goal || 5)), color: COLORS[h.color] ? h.color : "violeta", days: h.days && typeof h.days === "object" ? h.days : {} }));
-    save(); render(); $("bk-msg").textContent = "restaurado";
-  } catch(e){ $("bk-msg").textContent = "texto no válido, no se ha cambiado nada"; }
+    habits = d.habits.map(h => ({ id: h.id || uid(), name: String(h.name || "Habit"), desc: String(h.desc || ""),
+      goal: Math.min(7, Math.max(1, +h.goal || 5)), color: COLORS[h.color] ? h.color : (LEGACY_COLORS[h.color] || "violet"), days: h.days && typeof h.days === "object" ? h.days : {} }));
+    save(); render(); $("bk-msg").textContent = "restored";
+  } catch(e){ $("bk-msg").textContent = "invalid text, nothing was changed"; }
 };
 
-/* ===== arranque ===== */
+/* ===== startup ===== */
 load(); render();
 window.addEventListener("storage", e => { if (e.key === STORE){ load(); render(); } });
-// al cambiar de día, refresca (por si dejas la pestaña abierta)
+// refresh when the day changes (in case the tab stays open)
 let lastDay = keyOf(today());
 setInterval(() => { const k = keyOf(today()); if (k !== lastDay){ lastDay = k; render(); } }, 60000);
 </script>

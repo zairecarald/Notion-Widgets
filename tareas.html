@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>home · tareas</title>
+<title>home · tasks</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ====== PALETA (la misma que el resto de widgets) ====== */
+  /* ====== PALETTE (same as the other widgets) ====== */
   :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca;--warn:#d4907c;color-scheme:dark}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
@@ -45,9 +45,9 @@
 <body>
 <main>
   <section class="card">
-    <header><h2>MINI TO-DO</h2><button class="new" id="todo-new">+ NUEVO</button></header>
+    <header><h2>MINI TO-DO</h2><button class="new" id="todo-new">+ NEW</button></header>
     <form id="todo-form">
-      <input type="text" id="todo-text" placeholder="nueva tarea" maxlength="120" autocomplete="off">
+      <input type="text" id="todo-text" placeholder="new task" maxlength="120" autocomplete="off">
       <button type="submit">OK</button>
     </form>
     <ul id="todo-list"></ul>
@@ -55,15 +55,15 @@
   </section>
 
   <section class="card">
-    <header><h2>REMINDERS</h2><button class="new" id="rem-new">+ NUEVO</button></header>
+    <header><h2>REMINDERS</h2><button class="new" id="rem-new">+ NEW</button></header>
     <form id="rem-form">
-      <input type="text" id="rem-text" placeholder="nuevo recordatorio" maxlength="120" autocomplete="off">
+      <input type="text" id="rem-text" placeholder="new reminder" maxlength="120" autocomplete="off">
       <input type="date" id="rem-date">
       <button type="submit">OK</button>
     </form>
     <ul id="rem-list"></ul>
   </section>
-  <div id="warn">este navegador no deja guardar datos aquí: lo que añadas se perderá al recargar</div>
+  <div id="warn">this browser doesn't allow saving data here: anything you add will be lost on reload</div>
 </main>
 
 <script>
@@ -107,7 +107,7 @@ function renderTodos(){
   const ul = $("todo-list"); ul.textContent = "";
   const sorted = [...todos].sort((a, b) => a.done - b.done);
   if (!sorted.length){
-    const d = document.createElement("div"); d.className = "empty"; d.textContent = "nada pendiente";
+    const d = document.createElement("div"); d.className = "empty"; d.textContent = "nothing pending";
     ul.appendChild(d);
   }
   sorted.forEach(t => {
@@ -115,36 +115,36 @@ function renderTodos(){
     const cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "box"; cb.checked = t.done;
     cb.onchange = () => { t.done = cb.checked; save("home-todo", todos); renderTodos(); };
     const sp = document.createElement("span"); sp.className = "txt"; sp.textContent = t.text;
-    const x = document.createElement("button"); x.className = "x"; x.textContent = "×"; x.title = "borrar";
+    const x = document.createElement("button"); x.className = "x"; x.textContent = "×"; x.title = "delete";
     x.onclick = () => { todos = todos.filter(o => o.id !== t.id); save("home-todo", todos); renderTodos(); };
     li.append(cb, sp, x); ul.appendChild(li);
   });
   const foot = $("todo-foot"); foot.textContent = "";
   const doneN = todos.filter(t => t.done).length;
   if (doneN){
-    const b = document.createElement("button"); b.textContent = "limpiar hechas (" + doneN + ")";
+    const b = document.createElement("button"); b.textContent = "clear done (" + doneN + ")";
     b.onclick = () => { todos = todos.filter(t => !t.done); save("home-todo", todos); renderTodos(); };
     foot.appendChild(b);
   }
 }
 
-const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
 function whenLabel(iso){
   const [y, m, d] = iso.split("-").map(Number);
   const target = new Date(y, m - 1, d), now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diff = Math.round((target - today) / 864e5);
-  const date = d + " " + MONTHS[m - 1];
-  if (diff === 0) return { text: "hoy", cls: "today" };
-  if (diff === 1) return { text: "mañana · " + date, cls: "" };
-  if (diff < 0) return { text: date + " · pasado", cls: "late" };
-  if (diff < 8) return { text: date + " · en " + diff + "d", cls: "" };
+  const date = MONTHS[m - 1] + " " + d;
+  if (diff === 0) return { text: "today", cls: "today" };
+  if (diff === 1) return { text: "tomorrow · " + date, cls: "" };
+  if (diff < 0) return { text: date + " · overdue", cls: "late" };
+  if (diff < 8) return { text: date + " · in " + diff + "d", cls: "" };
   return { text: date, cls: "" };
 }
 function renderRems(){
   const ul = $("rem-list"); ul.textContent = "";
   const sorted = [...rems].sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999"));
   if (!sorted.length){
-    const d = document.createElement("div"); d.className = "empty"; d.textContent = "sin recordatorios";
+    const d = document.createElement("div"); d.className = "empty"; d.textContent = "no reminders";
     ul.appendChild(d);
   }
   sorted.forEach(r => {
@@ -156,7 +156,7 @@ function renderRems(){
       const w = whenLabel(r.date), s = document.createElement("span");
       s.className = "when " + w.cls; s.textContent = w.text; li.appendChild(s);
     }
-    const x = document.createElement("button"); x.className = "x"; x.textContent = "×"; x.title = "borrar";
+    const x = document.createElement("button"); x.className = "x"; x.textContent = "×"; x.title = "delete";
     x.onclick = () => { rems = rems.filter(o => o.id !== r.id); save("home-rem", rems); renderRems(); };
     li.appendChild(x); ul.appendChild(li);
   });

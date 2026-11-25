@@ -1,22 +1,22 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>home · cabecera</title>
+<title>home · header</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ====== PALETA (cámbiala aquí) ====== */
+  /* ====== PALETTE (change it here) ====== */
   :root{
-    --bg:#191919;        /* fondo, igual que el modo oscuro de Notion */
+    --bg:#191919;        /* background, same as Notion dark mode */
     --panel:#202020;
     --line:#3a3a38;
     --text:#e8e6df;
     --muted:#8d8b84;
-    --bar:#c4c2ac;       /* relleno de las barras */
-    --accent:#529cca;    /* azul de acento */
+    --bar:#c4c2ac;       /* bar fill */
+    --accent:#529cca;    /* accent blue */
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
@@ -64,23 +64,23 @@
 </head>
 <body>
 <main>
-  <h1 id="greet" title="clic para otro saludo"></h1>
-  <p class="hint">clic en el saludo para cambiarlo</p>
+  <h1 id="greet" title="click for another greeting"></h1>
+  <p class="hint">click the greeting to change it</p>
 
   <section class="row">
     <div class="clock">
-      <div class="unit"><b id="hh">00</b><small>HORAS</small></div>
+      <div class="unit"><b id="hh">00</b><small>HOURS</small></div>
       <div class="unit"><b id="mm">00</b><small>MIN</small></div>
-      <div class="unit"><b id="ss">00</b><small>SEG</small></div>
+      <div class="unit"><b id="ss">00</b><small>SEC</small></div>
       <div class="date" id="date"></div>
     </div>
 
     <div class="sun">
-      <div class="sun-top"><span>SOL EN</span><select id="place"></select></div>
+      <div class="sun-top"><span>SUN IN</span><select id="place"></select></div>
       <div class="sun-times">
-        <div><small>AMANECER</small><b id="rise">--:--</b></div>
-        <div><small>ATARDECER</small><b id="set">--:--</b></div>
-        <div><small>LUZ</small><b id="len">--</b></div>
+        <div><small>SUNRISE</small><b id="rise">--:--</b></div>
+        <div><small>SUNSET</small><b id="set">--:--</b></div>
+        <div><small>DAYLIGHT</small><b id="len">--</b></div>
       </div>
       <div class="daybar"><i id="sunprog"></i></div>
       <div id="sunline"></div>
@@ -88,14 +88,14 @@
   </section>
 
   <section class="bars">
-    <div class="bar"><label>DÍA</label><div class="track"><i id="b-day"></i></div><span id="t-day"></span></div>
-    <div class="bar"><label>SEMANA</label><div class="track"><i id="b-week"></i></div><span id="t-week"></span></div>
-    <div class="bar"><label>MES</label><div class="track"><i id="b-month"></i></div><span id="t-month"></span></div>
-    <div class="bar"><label>AÑO</label><div class="track"><i id="b-year"></i></div><span id="t-year"></span></div>
+    <div class="bar"><label>DAY</label><div class="track"><i id="b-day"></i></div><span id="t-day"></span></div>
+    <div class="bar"><label>WEEK</label><div class="track"><i id="b-week"></i></div><span id="t-week"></span></div>
+    <div class="bar"><label>MONTH</label><div class="track"><i id="b-month"></i></div><span id="t-month"></span></div>
+    <div class="bar"><label>YEAR</label><div class="track"><i id="b-year"></i></div><span id="t-year"></span></div>
   </section>
 
   <section class="age">
-    <div class="l">EDAD</div>
+    <div class="l">AGE</div>
     <b id="age1"></b>
     <p id="age2"></p>
     <p id="age3"></p>
@@ -104,13 +104,13 @@
 
 <script>
 /* =====================================================================
-   CONFIGURACIÓN: lo único que normalmente tendrás que tocar está aquí
+   CONFIG: the only part you will normally need to touch
    ===================================================================== */
 const CONFIG = {
   name: "Zaire",
-  birth: [2006, 9, 27],            // [año, mes, día]
+  birth: [2006, 9, 27],            // [year, month, day]
   defaultPlace: "Sevilla",
-  places: {                         // nombre: [latitud, longitud]
+  places: {                         // name: [latitude, longitude]
     "Sevilla":   [37.3891, -5.9845],
     "Bollullos": [37.3386, -6.5400],
     "Barcelona": [41.3874,  2.1686],
@@ -118,10 +118,10 @@ const CONFIG = {
   }
 };
 
-/* Saludos por franja horaria. {name} se sustituye por tu nombre.
-   Añade o quita frases libremente. */
+/* Greetings by time of day. {name} is replaced with your name.
+   Add or remove phrases freely. */
 const GREETINGS = {
-  madrugada: [   // 00:00 - 05:59
+  lateNight: [   // 00:00 - 05:59
     "The moon’s your copilot, {name}",
     "Still up, {name}? The night shift suits you",
     "Midnight thoughts hit different, {name}",
@@ -131,7 +131,7 @@ const GREETINGS = {
     "Even the moon is yawning, {name}",
     "Night owl mode: activated, {name}"
   ],
-  manana: [      // 06:00 - 11:59
+  morning: [      // 06:00 - 11:59
     "Rise and conquer, {name}",
     "The sun clocked in early for you, {name}",
     "Fresh day, fresh save file, {name}",
@@ -141,7 +141,7 @@ const GREETINGS = {
     "The day is a blank page, {name}",
     "Wake up and be mildly legendary, {name}"
   ],
-  mediodia: [    // 12:00 - 15:59
+  midday: [    // 12:00 - 15:59
     "High noon, {name}. Make it count",
     "The sun is at its peak and so are you, {name}",
     "Refuel, {name}. Heroes eat lunch too",
@@ -150,7 +150,7 @@ const GREETINGS = {
     "Main quest continues, {name}",
     "Midday already? Time flies when you’re winning, {name}"
   ],
-  tarde: [       // 16:00 - 20:59
+  evening: [       // 16:00 - 20:59
     "Golden hour has your name on it, {name}",
     "Still plenty of daylight to use, {name}",
     "The sun is leaning on the horizon, {name}",
@@ -159,7 +159,7 @@ const GREETINGS = {
     "Soft light, sharp mind, {name}",
     "Evening, {name}. One more good move?"
   ],
-  noche: [       // 21:00 - 23:59
+  night: [       // 21:00 - 23:59
     "Time to power down the engines, {name}",
     "The night is young and so are you, {name}",
     "Lights low, mind high, {name}",
@@ -170,7 +170,7 @@ const GREETINGS = {
   ]
 };
 
-/* ============================ SOL (SunCalc) ============================ */
+/* ============================ SUN (SunCalc) ============================ */
 // SUN-START
 const RAD = Math.PI / 180, DAY_MS = 864e5, J1970 = 2440588, J2000 = 2451545, OBLIQ = RAD * 23.4397, J0 = 0.0009;
 const toJulian = d => d.valueOf() / DAY_MS - 0.5 + J1970;
@@ -197,10 +197,10 @@ function sunTimes(date, lat, lng){
 }
 // SUN-END
 
-/* ============================ UTILIDADES ============================ */
+/* ============================ UTILITIES ============================ */
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, "0");
-const nf = new Intl.NumberFormat("es-ES");
+const nf = new Intl.NumberFormat("en-US");
 const hm = d => pad(d.getHours()) + ":" + pad(d.getMinutes());
 function dur(ms){
   const m = Math.max(0, Math.round(ms / 60000));
@@ -209,21 +209,21 @@ function dur(ms){
 function safeGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function safeSet(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
 
-/* ============================ SALUDO ============================ */
+/* ============================ GREETING ============================ */
 function slot(h){
-  return h < 6 ? "madrugada" : h < 12 ? "manana" : h < 16 ? "mediodia" : h < 21 ? "tarde" : "noche";
+  return h < 6 ? "lateNight" : h < 12 ? "morning" : h < 16 ? "midday" : h < 21 ? "evening" : "night";
 }
 let greetOffset = 0;
 function showGreeting(){
   const now = new Date(), list = GREETINGS[slot(now.getHours())];
-  // Misma frase durante toda la hora; cambia al cambiar de hora o al hacer clic
+  // Same phrase for the whole hour; it changes on the next hour or on click
   const seed = now.getFullYear() * 1000 + (now.getMonth() * 31 + now.getDate()) * 24 + now.getHours();
   const i = (seed * 7 + greetOffset) % list.length;
   $("greet").textContent = list[i].replace("{name}", CONFIG.name);
 }
 $("greet").addEventListener("click", () => { greetOffset++; showGreeting(); });
 
-/* ============================ SOL UI ============================ */
+/* ============================ SUN UI ============================ */
 const sel = $("place");
 Object.keys(CONFIG.places).forEach(p => {
   const o = document.createElement("option"); o.value = o.textContent = p; sel.appendChild(o);
@@ -241,20 +241,20 @@ function renderSun(){
   $("len").textContent = dur(t.set - t.rise);
   let line, prog;
   if (now < t.rise){
-    line = "amanece en " + dur(t.rise - now); prog = 0;
+    line = "sunrise in " + dur(t.rise - now); prog = 0;
   } else if (now < t.set){
-    line = "atardece en " + dur(t.set - now); prog = (now - t.rise) / (t.set - t.rise);
+    line = "sunset in " + dur(t.set - now); prog = (now - t.rise) / (t.set - t.rise);
   } else {
     const tm = sunTimes(new Date(noon.getTime() + DAY_MS), lat, lng);
-    line = "es de noche · amanece a las " + hm(tm.rise); prog = 1;
+    line = "night · sunrise at " + hm(tm.rise); prog = 1;
   }
   $("sunline").textContent = line;
   $("sunprog").style.width = (prog * 100).toFixed(1) + "%";
 }
 
-/* ============================ RELOJ, BARRAS, EDAD ============================ */
-const DAYS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
-const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+/* ============================ CLOCK, BARS, AGE ============================ */
+const DAYS = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+const MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
 const birth = new Date(CONFIG.birth[0], CONFIG.birth[1] - 1, CONFIG.birth[2]);
 
 function setBar(key, p, extra){
@@ -275,12 +275,12 @@ function tick(){
   $("hh").textContent = pad(n.getHours());
   $("mm").textContent = pad(n.getMinutes());
   $("ss").textContent = pad(n.getSeconds());
-  $("date").textContent = DAYS[n.getDay()] + " · " + n.getDate() + " " + MONTHS[n.getMonth()] + " " + n.getFullYear();
+  $("date").textContent = DAYS[n.getDay()] + " · " + MONTHS[n.getMonth()] + " " + n.getDate() + ", " + n.getFullYear();
 
   const y = n.getFullYear(), m = n.getMonth();
   const dayStart = new Date(y, m, n.getDate());
   const dayEnd = new Date(y, m, n.getDate() + 1);
-  const dow = (n.getDay() + 6) % 7;                       // lunes = 0
+  const dow = (n.getDay() + 6) % 7;                       // monday = 0
   const wkStart = new Date(y, m, n.getDate() - dow), wkEnd = new Date(y, m, n.getDate() - dow + 7);
   const moStart = new Date(y, m, 1), moEnd = new Date(y, m + 1, 1);
   const yrStart = new Date(y, 0, 1), yrEnd = new Date(y + 1, 0, 1);
@@ -294,12 +294,12 @@ function tick(){
 
   const a = ageParts(birth, n);
   const totalDays = Math.floor((n - birth) / DAY_MS);
-  $("age1").textContent = plural(a.y, "año", "años") + " · " + plural(a.m, "mes", "meses") + " · " + plural(a.d, "día", "días");
-  $("age2").textContent = nf.format(a.y * 12 + a.m) + " meses · " + nf.format(Math.floor(totalDays / 7)) + " semanas · " + nf.format(totalDays) + " días";
+  $("age1").textContent = plural(a.y, "year", "years") + " · " + plural(a.m, "month", "months") + " · " + plural(a.d, "day", "days");
+  $("age2").textContent = nf.format(a.y * 12 + a.m) + " months · " + nf.format(Math.floor(totalDays / 7)) + " weeks · " + nf.format(totalDays) + " days";
   let next = new Date(y, birth.getMonth(), birth.getDate());
   if (next < dayStart) next = new Date(y + 1, birth.getMonth(), birth.getDate());
   const toNext = Math.round((next - dayStart) / DAY_MS);
-  $("age3").textContent = toNext === 0 ? "hoy es tu cumpleaños" : "próximo cumple en " + toNext + " días";
+  $("age3").textContent = toNext === 0 ? "today is your birthday" : "next birthday in " + toNext + " days";
 }
 
 let lastMinute = -1, lastHour = -1;

@@ -37,7 +37,12 @@
   .ctrl button{font:inherit;font-size:12px;cursor:pointer;border-radius:6px;padding:7px 4px;background:transparent;color:var(--text);border:1px solid var(--line);grid-column:span 2}
   .ctrl button:hover{border-color:var(--muted)}
   .ctrl button.wide{grid-column:span 3}
-  .lbl{grid-column:1/-1;display:flex;justify-content:space-between;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-top:4px}
+  .lbl{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-top:4px;cursor:pointer;user-select:none;padding:3px 0}
+  .lbl:hover{color:var(--text)}
+  .lbl .name{display:flex;align-items:center;gap:8px}
+  .lbl .name::before{content:"";width:5px;height:5px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-1px,-1px);transition:transform .15s}
+  .ctrl.ac-closed .lbl .name::before{transform:rotate(-45deg)}
+  .ctrl.ac-closed #fin,.ctrl.ac-closed #fout,.ctrl.ac-closed #fclr{display:none}
   .lbl #trimInfo{color:var(--text);letter-spacing:0;font-variant-numeric:tabular-nums}
   .ctrl button.main{background:var(--text);color:var(--bg);border:0;font-weight:800}
   .ctrl button.on{color:var(--accent);border-color:var(--accent)}
@@ -59,13 +64,13 @@
         <div class="flag in" id="flagIn"></div><div class="flag out" id="flagOut"></div>
       </div>
       <div class="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
-      <div class="ctrl">
+      <div class="ctrl ac-closed" id="ctrl">
         <button id="prev" title="previous">&lt;&lt;</button>
         <button id="play" class="main">PLAY</button>
         <button id="next" title="next">&gt;&gt;</button>
         <button id="shuf" class="wide" title="shuffle">SHUF</button>
         <button id="loop" class="wide on" title="repeat playlist">LOOP</button>
-        <div class="lbl"><span>ANTICLAPS</span><span id="trimInfo"></span></div>
+        <div class="lbl" id="aclbl" title="show / hide the anticlaps flags"><span class="name">ANTICLAPS</span><span id="trimInfo"></span></div>
         <button id="fin" title="From now on this song will start here">FLAG IN</button>
         <button id="fout" title="From now on this song will stop here and jump to the next one">FLAG OUT</button>
         <button id="fclr" title="Remove both flags from this song">CLEAR</button>
@@ -128,7 +133,7 @@ function loadCurrent(autoplay){
 function onReady(){
   player.setVolume(+$("vol").value);
   loadCurrent(false);
-  $("status").textContent = "press PLAY";
+  $("status").textContent = "";
   setInterval(tick, 250);
 }
 function onStateChange(e){
@@ -138,7 +143,7 @@ function onStateChange(e){
   if (!flash){
     if (st === 1) $("status").textContent = "playing";
     if (st === 2) $("status").textContent = "paused";
-    if (st === 5) $("status").textContent = "press PLAY";
+    if (st === 5) $("status").textContent = "";
   }
   if (st === 0) applyIn = true;          // a song ended: the next start goes through the IN flag
   tick();
@@ -202,6 +207,12 @@ function flagNow(kind){
   }
   saveTrims(); tick();
 }
+const acOpen = safeGet("music-anticlaps-open") === "1";
+$("ctrl").classList.toggle("ac-closed", !acOpen);
+$("aclbl").onclick = () => {
+  const closed = $("ctrl").classList.toggle("ac-closed");
+  safeSet("music-anticlaps-open", closed ? "0" : "1");
+};
 $("fin").onclick = () => flagNow("in");
 $("fout").onclick = () => flagNow("out");
 $("fclr").onclick = () => { if (!curVid || !trims[curVid]) return; delete trims[curVid]; saveTrims(); say("flags removed from this song"); tick(); };

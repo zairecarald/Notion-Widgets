@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   /* ====== PALETTE (same as the other widgets) ====== */
-  :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca}
+  :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca;--warn:#d4907c}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
   main{padding:12px 16px 18px}
@@ -21,8 +21,15 @@
   select{background:var(--bg);color:var(--accent);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:12px;font-weight:700;padding:5px 6px;cursor:pointer;width:100%}
   #title{font-weight:700;font-size:14px;line-height:1.3;min-height:36px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
   #status{font-size:11px;color:var(--muted);min-height:14px}
-  .seek{height:8px;border:1.5px solid var(--line);border-radius:5px;cursor:pointer;overflow:hidden}
+  .seekwrap{position:relative;padding-top:12px;cursor:pointer}
+  .seek{position:relative;height:8px;border:1.5px solid var(--line);border-radius:5px;overflow:hidden}
   .seek i{display:block;height:100%;width:0;background:var(--bar)}
+  .dim{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,rgba(0,0,0,.6) 0 3px,rgba(0,0,0,.3) 3px 6px);display:none}
+  .flag{--c:var(--accent);position:absolute;top:0;height:20px;width:0;border-left:2px solid var(--c);display:none;pointer-events:none}
+  .flag::before{content:"";position:absolute;top:0;width:9px;height:7px;background:var(--c)}
+  .flag.in::before{left:0;clip-path:polygon(0 0,100% 50%,0 100%)}
+  .flag.out{--c:var(--warn)}
+  .flag.out::before{left:-9px;clip-path:polygon(100% 0,0 50%,100% 100%)}
   .times{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:-4px}
 
   /* 6-column grid: top row = 3 buttons of 2 columns, bottom row = 2 buttons of 3 columns (symmetric) */
@@ -30,6 +37,8 @@
   .ctrl button{font:inherit;font-size:12px;cursor:pointer;border-radius:6px;padding:7px 4px;background:transparent;color:var(--text);border:1px solid var(--line);grid-column:span 2}
   .ctrl button:hover{border-color:var(--muted)}
   .ctrl button.wide{grid-column:span 3}
+  .lbl{grid-column:1/-1;display:flex;justify-content:space-between;font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-top:4px}
+  .lbl #trimInfo{color:var(--text);letter-spacing:0;font-variant-numeric:tabular-nums}
   .ctrl button.main{background:var(--text);color:var(--bg);border:0;font-weight:800}
   .ctrl button.on{color:var(--accent);border-color:var(--accent)}
   .vol{display:flex;align-items:center;gap:10px;font-size:10px;color:var(--muted);letter-spacing:1px}
@@ -45,7 +54,10 @@
       <select id="pl"></select>
       <div id="title">&mdash;</div>
       <div id="status">loading&hellip;</div>
-      <div class="seek" id="seek"><i id="fill"></i></div>
+      <div class="seekwrap" id="seekwrap">
+        <div class="seek" id="seek"><i id="fill"></i><b class="dim" id="dimL"></b><b class="dim" id="dimR"></b></div>
+        <div class="flag in" id="flagIn"></div><div class="flag out" id="flagOut"></div>
+      </div>
       <div class="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
       <div class="ctrl">
         <button id="prev" title="previous">&lt;&lt;</button>
@@ -53,6 +65,10 @@
         <button id="next" title="next">&gt;&gt;</button>
         <button id="shuf" class="wide" title="shuffle">SHUF</button>
         <button id="loop" class="wide on" title="repeat playlist">LOOP</button>
+        <div class="lbl"><span>ANTICLAPS</span><span id="trimInfo"></span></div>
+        <button id="fin" title="From now on this song will start here">FLAG IN</button>
+        <button id="fout" title="From now on this song will stop here and jump to the next one">FLAG OUT</button>
+        <button id="fclr" title="Remove both flags from this song">CLEAR</button>
       </div>
       <div class="vol"><span>VOL</span><input type="range" id="vol" min="0" max="100" value="60"></div>
     </div>
@@ -81,6 +97,12 @@ const q = new URLSearchParams(location.search).get("list");   // optional: music
 if (q) { PLAYLISTS.unshift({ name: "link", url: q }); const o = document.createElement("option"); o.value = 0; o.textContent = "link"; $("pl").prepend(o); $("pl").value = 0; }
 
 let player = null, shuffle = false, loop = true, playing = false;
+
+/* ANTICLAPS: per-song start/stop flags (saved in this browser, one pair per YouTube video) */
+let trims = {};
+try { trims = JSON.parse(safeGet("music-anticlaps")) || {}; } catch(e){}
+const saveTrims = () => safeSet("music-anticlaps", JSON.stringify(trims));
+let curVid = null, lastTime = 0, applyIn = false, flash = "", flashTimer = null;
 const vol0 = safeGet("music-vol");
 if (vol0 !== null && !isNaN(+vol0)) $("vol").value = +vol0;
 
@@ -107,15 +129,18 @@ function onReady(){
   player.setVolume(+$("vol").value);
   loadCurrent(false);
   $("status").textContent = "press PLAY";
-  setInterval(tick, 500);
+  setInterval(tick, 250);
 }
 function onStateChange(e){
   const st = e.data;
   playing = (st === 1 || st === 3);
   $("play").textContent = playing ? "PAUSE" : "PLAY";
-  if (st === 1) $("status").textContent = "playing";
-  if (st === 2) $("status").textContent = "paused";
-  if (st === 5) $("status").textContent = "press PLAY";
+  if (!flash){
+    if (st === 1) $("status").textContent = "playing";
+    if (st === 2) $("status").textContent = "paused";
+    if (st === 5) $("status").textContent = "press PLAY";
+  }
+  if (st === 0) applyIn = true;          // a song ended: the next start goes through the IN flag
   tick();
 }
 function onError(e){
@@ -125,15 +150,61 @@ function onError(e){
   else if (c === 2){ $("status").textContent = "invalid link or playlist ID"; }
   else { $("status").textContent = "playback error (" + c + ")"; }
 }
+function say(msg){
+  flash = msg; clearTimeout(flashTimer);
+  $("status").textContent = msg;
+  flashTimer = setTimeout(() => { flash = ""; }, 2500);
+}
+function drawFlags(d){
+  const tr = trims[curVid] || {};
+  const pos = v => (d ? Math.max(0, Math.min(100, v / d * 100)) : 0) + "%";
+  const fi = $("flagIn"), fo = $("flagOut"), dl = $("dimL"), dr = $("dimR");
+  fi.style.display = tr.in != null && d ? "block" : "none"; if (tr.in != null) fi.style.left = pos(tr.in);
+  fo.style.display = tr.out != null && d ? "block" : "none"; if (tr.out != null) fo.style.left = pos(tr.out);
+  dl.style.display = tr.in != null && d ? "block" : "none"; dl.style.left = "0"; dl.style.width = tr.in != null ? pos(tr.in) : "0";
+  dr.style.display = tr.out != null && d ? "block" : "none"; dr.style.right = "0"; dr.style.width = tr.out != null ? (100 - parseFloat(pos(tr.out))) + "%" : "0";
+  $("trimInfo").textContent = tr.in != null || tr.out != null ? "IN " + (tr.in != null ? fmt(tr.in) : "-") + "  OUT " + (tr.out != null ? fmt(tr.out) : "-") : "";
+}
 function tick(){
   if (!player || !player.getCurrentTime) return;
   try {
     const d = player.getDuration(), t = player.getCurrentTime(), data = player.getVideoData();
     if (data && data.title) $("title").textContent = data.title;
+    const vid = data && data.video_id;
+    if (vid && vid !== curVid){ curVid = vid; applyIn = true; lastTime = 0; }
+    const tr = trims[curVid];
+
+    if (applyIn && playing){                        // song just started: honour the IN flag once
+      applyIn = false;
+      if (tr && tr.in != null && t < tr.in - 0.5){ player.seekTo(tr.in, true); lastTime = tr.in; drawFlags(d); return; }
+    }
+    // natural arrival at the OUT flag (a manual jump past it is left alone so you can move the flag)
+    if (tr && tr.out != null && playing && lastTime < tr.out && t >= tr.out && t - lastTime < 1.5){
+      applyIn = true; lastTime = 0; player.nextVideo(); return;
+    }
+    lastTime = t;
+
     $("cur").textContent = fmt(t); $("dur").textContent = fmt(d);
     $("fill").style.width = d ? (t / d * 100) + "%" : "0%";
+    drawFlags(d);
   } catch(e){}
 }
+
+function flagNow(kind){
+  if (!player || !curVid) return;
+  const t = Math.round(player.getCurrentTime()), tr = trims[curVid] = trims[curVid] || {};
+  if (kind === "in"){
+    if (tr.out != null && t >= tr.out){ say("IN must come before OUT (" + fmt(tr.out) + ")"); return; }
+    tr.in = t; say("IN flag set at " + fmt(t));
+  } else {
+    if (tr.in != null && t <= tr.in){ say("OUT must come after IN (" + fmt(tr.in) + ")"); return; }
+    tr.out = t; say("OUT flag set at " + fmt(t));
+  }
+  saveTrims(); tick();
+}
+$("fin").onclick = () => flagNow("in");
+$("fout").onclick = () => flagNow("out");
+$("fclr").onclick = () => { if (!curVid || !trims[curVid]) return; delete trims[curVid]; saveTrims(); say("flags removed from this song"); tick(); };
 
 $("play").onclick = () => { if (!player) return; playing ? player.pauseVideo() : player.playVideo(); };
 $("prev").onclick = () => player && player.previousVideo();
@@ -142,7 +213,7 @@ $("shuf").onclick = () => { shuffle = !shuffle; $("shuf").classList.toggle("on",
 $("loop").onclick = () => { loop = !loop; $("loop").classList.toggle("on", loop); if (player) player.setLoop(loop); };
 $("pl").onchange = () => player && loadCurrent(true);
 $("vol").oninput = () => { if (player) player.setVolume(+$("vol").value); safeSet("music-vol", $("vol").value); };
-$("seek").onclick = e => {
+$("seekwrap").onclick = e => {
   if (!player) return;
   const r = $("seek").getBoundingClientRect();
   player.seekTo(player.getDuration() * ((e.clientX - r.left) / r.width), true);

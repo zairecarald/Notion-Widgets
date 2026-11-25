@@ -9,23 +9,37 @@
   /* ====== PALETTE (same as the other widgets) ====== */
   :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca;--warn:#d4907c;color-scheme:dark}
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
-  main{padding:12px 10px 18px;display:grid;gap:12px}
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+  /* the sidebar fills whatever height you give the embed in Notion */
+  main{min-height:100%;padding:12px 10px 18px;display:flex;flex-direction:column;gap:16px}
   h2{font-size:10px;letter-spacing:2px;font-weight:700;color:var(--muted);margin:2px 2px 0}
   .sec{display:grid;gap:8px}
+  #groups{flex:1;display:flex;flex-direction:column;gap:14px}
+
+  /* quick-action */
+  .quick{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:6px}
+  .qrow{--c:#e8e6df;display:flex;align-items:center;gap:10px;width:100%;padding:10px 9px;border-radius:7px;border:0;background:transparent;
+        color:var(--text);font:inherit;font-size:12px;text-align:left;text-decoration:none;cursor:pointer}
+  .qrow:hover{background:rgba(255,255,255,.05)}
+  .qrow .pl{width:12px;height:12px;position:relative;flex:none;opacity:.75}
+  .qrow .pl::before,.qrow .pl::after{content:"";position:absolute;background:var(--text);border-radius:1px}
+  .qrow .pl::before{left:5px;top:0;width:2px;height:12px}
+  .qrow .pl::after{left:0;top:5px;width:12px;height:2px}
+  .qrow span.t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .qrow span.r{font-size:10px;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
 
   /* goal cards */
   .goal{--c:#8e8bf0;border:1px solid color-mix(in srgb,var(--c) 24%,var(--line));border-radius:10px;
-        background:color-mix(in srgb,var(--c) 7%,var(--panel));padding:11px 12px;cursor:pointer}
+        background:color-mix(in srgb,var(--c) 7%,var(--panel));padding:14px 13px;cursor:pointer}
   .goal:hover{border-color:color-mix(in srgb,var(--c) 45%,var(--line))}
   .g-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
   .g-head b{font-size:13px;font-weight:700}
   .g-head span{font-size:12px;color:var(--c);font-weight:700;font-variant-numeric:tabular-nums}
-  .g-goal{font-size:10px;color:var(--muted);margin:3px 0 9px;line-height:1.4}
+  .g-goal{font-size:10px;color:var(--muted);margin:4px 0 11px;line-height:1.4}
   .track{height:9px;border-radius:5px;background:color-mix(in srgb,var(--c) 14%,var(--bg));overflow:hidden}
   .track i{display:block;height:100%;width:0;background:var(--c);border-radius:5px;transition:width .4s ease}
-  .g-info{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:7px;font-variant-numeric:tabular-nums}
-  .g-edit{display:none;margin-top:10px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--c) 18%,var(--line));gap:6px;align-items:center}
+  .g-info{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:8px;font-variant-numeric:tabular-nums}
+  .g-edit{display:none;margin-top:11px;padding-top:11px;border-top:1px solid color-mix(in srgb,var(--c) 18%,var(--line));gap:6px;align-items:center}
   .goal.open .g-edit{display:flex}
   .g-edit button{width:30px;height:28px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--text);font:inherit;font-size:14px;cursor:pointer}
   .g-edit button:hover{border-color:var(--c)}
@@ -34,10 +48,11 @@
   .g-edit input:focus,.g-edit select:focus{border-color:var(--c)}
 
   /* page groups */
-  .group{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 6px 6px}
-  .group h3{--c:#8e8bf0;font-size:10px;letter-spacing:2px;font-weight:700;color:var(--muted);padding:2px 8px 7px;display:flex;align-items:center;gap:8px}
+  .group{flex:1;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px 6px 6px}
+  .group h3{--c:#8e8bf0;font-size:10px;letter-spacing:2px;font-weight:700;color:var(--muted);padding:2px 8px 8px;display:flex;align-items:center;gap:8px}
   .group h3::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--c)}
-  .item{--c:#8e8bf0;display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;color:var(--text);text-decoration:none;font-size:12px}
+  .gitems{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;gap:2px}
+  .item{--c:#8e8bf0;display:flex;align-items:center;gap:9px;padding:10px 8px;min-height:38px;border-radius:6px;color:var(--text);text-decoration:none;font-size:12px}
   .item:hover{background:color-mix(in srgb,var(--c) 12%,transparent)}
   .item span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .item::after{content:"";width:5px;height:5px;border:solid var(--muted);border-width:1.5px 1.5px 0 0;transform:rotate(45deg);opacity:.5;flex:none}
@@ -49,8 +64,9 @@
 </head>
 <body>
 <main>
+  <section class="sec"><h2>QUICK-ACTION</h2><div class="quick" id="quick"></div></section>
   <section class="sec"><h2>GOAL TRACKER</h2><div id="goals" class="sec"></div></section>
-  <section class="sec" id="groups"></section>
+  <section id="groups"></section>
   <div id="warn">this browser doesn't allow saving data here: goal progress will be lost on reload</div>
 </main>
 
@@ -66,6 +82,17 @@ const GOALS = [
     steps: ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond"] },
   { id: "french", name: "French", goal: "200 terms learned in my app", type: "count", color: "cyan",
     target: 200, unit: "terms" }
+];
+
+/* ====================================================================
+   QUICK-ACTION: two kinds of buttons, add or remove lines freely.
+   { name, url }                      opens a link in a new tab
+   { name, bump: { goal, by } }       adds "by" to a count goal (e.g. +1 French term)
+   ==================================================================== */
+const QUICK = [
+  { name: "New page",         url: "https://www.notion.so/new" },
+  { name: "New journal entry", url: "https://app.notion.com/p/4235cfe181fd81da9624c99e8c0a7da6" },
+  { name: "+1 French term",   bump: { goal: "french", by: 1 } }
 ];
 
 /* ====================================================================
@@ -120,7 +147,7 @@ function measure(g){
     const last = g.steps.length - 1;
     return { p: idx < 0 ? 0 : idx / last,
              left: idx < 0 ? "not set yet" : "now " + g.steps[idx],
-             right: idx >= last ? "goal reached" : "next " + g.steps[idx + 1 < 0 ? 0 : idx + 1] };
+             right: idx >= last ? "goal reached" : "next " + g.steps[idx + 1] };
   }
   const cur = Math.max(0, +state[g.id] || 0);
   return { p: Math.min(1, cur / g.target), left: cur + " / " + g.target + " " + (g.unit || ""), right: Math.max(0, g.target - cur) + " to go" };
@@ -163,21 +190,43 @@ function renderGoals(){
   });
 }
 
+function renderQuick(){
+  const box = $("quick"); box.textContent = "";
+  QUICK.forEach(q => {
+    const inner = [el("span", { class: "pl" }), el("span", { class: "t", text: q.name })];
+    if (q.url){
+      box.appendChild(el("a", { class: "qrow", href: q.url, target: "_blank", rel: "noopener noreferrer" }, ...inner));
+    } else if (q.bump){
+      const g = GOALS.find(x => x.id === q.bump.goal);
+      if (!g || g.type !== "count") return;
+      const right = el("span", { class: "r" });
+      const b = el("button", { class: "qrow", type: "button" }, ...inner, right);
+      b.onclick = () => {
+        state[g.id] = Math.max(0, Math.min(g.target, (+state[g.id] || 0) + (q.bump.by || 1)));
+        save(); renderGoals();
+        right.textContent = state[g.id] + " / " + g.target;
+        setTimeout(() => { right.textContent = ""; }, 1400);
+      };
+      box.appendChild(b);
+    }
+  });
+}
+
 function renderGroups(){
   const box = $("groups"); box.textContent = "";
   GROUPS.forEach(gr => {
     const h = el("h3", { text: gr.name.toUpperCase() }); h.style.setProperty("--c", col(gr.color));
-    const wrap = el("div", { class: "group" }, h);
-    if (!gr.items.length) wrap.appendChild(el("div", { class: "none", text: "no pages yet" }));
+    const items = el("div", { class: "gitems" });
+    if (!gr.items.length) items.appendChild(el("div", { class: "none", text: "no pages yet" }));
     gr.items.forEach(it => {
       const a = el("a", { class: "item", href: it.url, target: "_blank", rel: "noopener noreferrer" }, el("i"), el("span", { text: it.name }));
       a.style.setProperty("--c", col(gr.color));
-      wrap.appendChild(a);
+      items.appendChild(a);
     });
-    box.appendChild(wrap);
+    box.appendChild(el("div", { class: "group" }, h, items));
   });
 }
-renderGoals(); renderGroups();
+renderQuick(); renderGoals(); renderGroups();
 window.addEventListener("storage", e => {
   if (e.key === STORE){ try { state = JSON.parse(e.newValue) || {}; } catch(x){ state = {}; } renderGoals(); }
 });

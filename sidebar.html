@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>home · sidebar</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ====== PALETTE (same as the other widgets) ====== */
+  :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca;--warn:#d4907c;color-scheme:dark}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+  main{padding:12px 10px 18px;display:grid;gap:12px}
+  h2{font-size:10px;letter-spacing:2px;font-weight:700;color:var(--muted);margin:2px 2px 0}
+  .sec{display:grid;gap:8px}
+
+  /* goal cards */
+  .goal{--c:#8e8bf0;border:1px solid color-mix(in srgb,var(--c) 24%,var(--line));border-radius:10px;
+        background:color-mix(in srgb,var(--c) 7%,var(--panel));padding:11px 12px;cursor:pointer}
+  .goal:hover{border-color:color-mix(in srgb,var(--c) 45%,var(--line))}
+  .g-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .g-head b{font-size:13px;font-weight:700}
+  .g-head span{font-size:12px;color:var(--c);font-weight:700;font-variant-numeric:tabular-nums}
+  .g-goal{font-size:10px;color:var(--muted);margin:3px 0 9px;line-height:1.4}
+  .track{height:9px;border-radius:5px;background:color-mix(in srgb,var(--c) 14%,var(--bg));overflow:hidden}
+  .track i{display:block;height:100%;width:0;background:var(--c);border-radius:5px;transition:width .4s ease}
+  .g-info{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:7px;font-variant-numeric:tabular-nums}
+  .g-edit{display:none;margin-top:10px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--c) 18%,var(--line));gap:6px;align-items:center}
+  .goal.open .g-edit{display:flex}
+  .g-edit button{width:30px;height:28px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--text);font:inherit;font-size:14px;cursor:pointer}
+  .g-edit button:hover{border-color:var(--c)}
+  .g-edit input,.g-edit select{flex:1;min-width:0;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12px;padding:5px 7px;outline:none;text-align:center}
+  .g-edit select{text-align:left;color:var(--c);font-weight:700}
+  .g-edit input:focus,.g-edit select:focus{border-color:var(--c)}
+
+  /* page groups */
+  .group{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 6px 6px}
+  .group h3{--c:#8e8bf0;font-size:10px;letter-spacing:2px;font-weight:700;color:var(--muted);padding:2px 8px 7px;display:flex;align-items:center;gap:8px}
+  .group h3::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--c)}
+  .item{--c:#8e8bf0;display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;color:var(--text);text-decoration:none;font-size:12px}
+  .item:hover{background:color-mix(in srgb,var(--c) 12%,transparent)}
+  .item span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item::after{content:"";width:5px;height:5px;border:solid var(--muted);border-width:1.5px 1.5px 0 0;transform:rotate(45deg);opacity:.5;flex:none}
+  .item:hover::after{opacity:1;border-color:var(--c)}
+  .item i{width:5px;height:5px;border-radius:50%;background:var(--c);flex:none;opacity:.8}
+  .none{font-size:11px;color:var(--muted);padding:5px 8px}
+  #warn{display:none;font-size:10px;color:var(--warn)}
+</style>
+</head>
+<body>
+<main>
+  <section class="sec"><h2>GOAL TRACKER</h2><div id="goals" class="sec"></div></section>
+  <section class="sec" id="groups"></section>
+  <div id="warn">this browser doesn't allow saving data here: goal progress will be lost on reload</div>
+</main>
+
+<script>
+/* ====================================================================
+   GOALS
+   type "count": progress = current / target            (e.g. terms learned)
+   type "steps": progress = position in the list of steps (e.g. ranks)
+   Edit the cards by clicking them. Later they can be fed by your apps.
+   ==================================================================== */
+const GOALS = [
+  { id: "league", name: "League", goal: "Reach Diamond", type: "steps", color: "violet",
+    steps: ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond"] },
+  { id: "french", name: "French", goal: "200 terms learned in my app", type: "count", color: "cyan",
+    target: 200, unit: "terms" }
+];
+
+/* ====================================================================
+   PAGE GROUPS: add or remove lines freely.
+   url = the Notion page (open it in Notion, "Share" > "Copy link").
+   ==================================================================== */
+const GROUPS = [
+  { name: "Study", color: "violet", items: [
+    { name: "Languages", url: "https://app.notion.com/p/4235cfe181fd81938ff1f8f15ed827ad" },
+    { name: "Skills",    url: "https://app.notion.com/p/4235cfe181fd810da987f2fa45f41460" }
+  ]},
+  { name: "Personal", color: "cyan", items: [
+    { name: "LoL Games", url: "https://app.notion.com/p/41f5cfe181fd814c8b27e2625a5c1bb2" },
+    { name: "Journal",   url: "https://app.notion.com/p/4235cfe181fd81da9624c99e8c0a7da6" },
+    { name: "Wishlist",  url: "https://app.notion.com/p/4235cfe181fd818597f9d7cad0cce194" }
+  ]},
+  { name: "Future", color: "amber", items: [
+    { name: "Plans", url: "https://app.notion.com/p/4235cfe181fd814ab7d5cfba073f9e6c" },
+    { name: "Ideas", url: "https://app.notion.com/p/4235cfe181fd817d89a7c03c6c40dfcd" }
+  ]}
+];
+
+const COLORS = { violet:"#8e8bf0", amber:"#e0a35a", cyan:"#5cc4dc", green:"#7fbf8a", rose:"#d4907c", beige:"#c4c2ac" };
+const STORE = "home-goals";
+
+/* ============================ CODE ============================ */
+const $ = id => document.getElementById(id);
+function el(tag, props, ...kids){
+  const e = document.createElement(tag);
+  if (props) for (const k in props){
+    if (k === "class") e.className = props[k];
+    else if (k === "text") e.textContent = props[k];
+    else if (k.startsWith("on")) e[k] = props[k];
+    else e.setAttribute(k, props[k]);
+  }
+  kids.flat().forEach(c => c && e.appendChild(c));
+  return e;
+}
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORE)) || {}; } catch(e){}
+function save(){
+  try { localStorage.setItem(STORE, JSON.stringify(state)); }
+  catch(e){ $("warn").style.display = "block"; }
+}
+const col = n => COLORS[n] || COLORS.violet;
+let openId = null;
+
+/* progress as a 0..1 number plus the short texts for the card */
+function measure(g){
+  if (g.type === "steps"){
+    const idx = Number.isInteger(state[g.id]) ? state[g.id] : -1;
+    const last = g.steps.length - 1;
+    return { p: idx < 0 ? 0 : idx / last,
+             left: idx < 0 ? "not set yet" : "now " + g.steps[idx],
+             right: idx >= last ? "goal reached" : "next " + g.steps[idx + 1 < 0 ? 0 : idx + 1] };
+  }
+  const cur = Math.max(0, +state[g.id] || 0);
+  return { p: Math.min(1, cur / g.target), left: cur + " / " + g.target + " " + (g.unit || ""), right: Math.max(0, g.target - cur) + " to go" };
+}
+
+function renderGoals(){
+  const box = $("goals"); box.textContent = "";
+  GOALS.forEach(g => {
+    const m = measure(g), pct = Math.round(m.p * 100);
+    const card = el("div", { class: "goal" + (openId === g.id ? " open" : "") });
+    card.style.setProperty("--c", col(g.color));
+    card.onclick = () => { openId = openId === g.id ? null : g.id; renderGoals(); };
+
+    card.appendChild(el("div", { class: "g-head" }, el("b", { text: g.name }), el("span", { text: pct + "%" })));
+    card.appendChild(el("div", { class: "g-goal", text: g.goal }));
+    const fill = el("i"); fill.style.width = pct + "%";
+    card.appendChild(el("div", { class: "track" }, fill));
+    card.appendChild(el("div", { class: "g-info" }, el("span", { text: m.left }), el("span", { text: m.right })));
+
+    const edit = el("div", { class: "g-edit" });
+    edit.onclick = e => e.stopPropagation();
+    if (g.type === "steps"){
+      const sel = el("select");
+      sel.appendChild(el("option", { value: "-1", text: "Unranked" }));
+      g.steps.forEach((s, i) => sel.appendChild(el("option", { value: String(i), text: s })));
+      sel.value = String(Number.isInteger(state[g.id]) ? state[g.id] : -1);
+      sel.onchange = () => { state[g.id] = +sel.value; save(); renderGoals(); };
+      edit.appendChild(sel);
+    } else {
+      const inp = el("input", { type: "number", min: "0", max: String(g.target), step: "1" });
+      inp.value = Math.max(0, +state[g.id] || 0);
+      const set = v => { state[g.id] = Math.max(0, Math.min(g.target, Math.round(v) || 0)); save(); renderGoals(); };
+      edit.appendChild(el("button", { text: "-", title: "-1", onclick: () => set((+state[g.id] || 0) - 1) }));
+      inp.onchange = () => set(+inp.value);
+      edit.appendChild(inp);
+      edit.appendChild(el("button", { text: "+", title: "+1", onclick: () => set((+state[g.id] || 0) + 1) }));
+    }
+    card.appendChild(edit);
+    box.appendChild(card);
+  });
+}
+
+function renderGroups(){
+  const box = $("groups"); box.textContent = "";
+  GROUPS.forEach(gr => {
+    const h = el("h3", { text: gr.name.toUpperCase() }); h.style.setProperty("--c", col(gr.color));
+    const wrap = el("div", { class: "group" }, h);
+    if (!gr.items.length) wrap.appendChild(el("div", { class: "none", text: "no pages yet" }));
+    gr.items.forEach(it => {
+      const a = el("a", { class: "item", href: it.url, target: "_blank", rel: "noopener noreferrer" }, el("i"), el("span", { text: it.name }));
+      a.style.setProperty("--c", col(gr.color));
+      wrap.appendChild(a);
+    });
+    box.appendChild(wrap);
+  });
+}
+renderGoals(); renderGroups();
+window.addEventListener("storage", e => {
+  if (e.key === STORE){ try { state = JSON.parse(e.newValue) || {}; } catch(x){ state = {}; } renderGoals(); }
+});
+</script>
+</body>
+</html>

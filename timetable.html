@@ -16,6 +16,11 @@
   .top h2{font-size:11px;letter-spacing:2px;font-weight:700;color:var(--muted)}
   .pill{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:14px;font:inherit;font-size:10px;letter-spacing:1px;padding:4px 11px;cursor:pointer}
   .pill:hover{border-color:var(--muted)}
+  .nav{display:flex;align-items:center;gap:6px}
+  .nav .pill{padding:4px 9px}
+  #wk{font-size:10px;letter-spacing:1.5px;color:var(--muted);min-width:118px;text-align:center;font-variant-numeric:tabular-nums}
+  .chk{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);cursor:pointer}
+  .chk input{accent-color:var(--accent);width:14px;height:14px}
 
   /* form */
   .form{display:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px;margin-bottom:12px;gap:10px;flex-direction:column}
@@ -67,7 +72,9 @@
 </head>
 <body>
 <main>
-  <div class="top"><h2>TIMETABLE</h2><button class="pill" id="new">+ NEW</button></div>
+  <div class="top"><h2>TIMETABLE</h2>
+    <div class="nav"><button class="pill" id="wprev" title="previous week">&lt;</button><span id="wk"></span><button class="pill" id="wnext" title="next week">&gt;</button><button class="pill" id="wnow" title="back to this week">TODAY</button></div>
+    <button class="pill" id="new">+ NEW</button></div>
 
   <form class="form" id="form" autocomplete="off">
     <div><label>TITLE</label><input type="text" id="f-title" maxlength="40" placeholder="e.g. Work"></div>
@@ -76,6 +83,7 @@
       <div><label>START</label><input type="time" id="f-start" step="300"></div>
       <div><label>END</label><input type="time" id="f-end" step="300"></div>
     </div>
+    <label class="chk"><input type="checkbox" id="f-rep" checked> repeat every week (untick for this week only)</label>
     <div><label>COLOR</label><div class="swatches" id="f-sw"></div></div>
     <div class="btns">
       <button type="submit" class="btn" id="f-save">SAVE</button>
@@ -99,7 +107,7 @@
 <script>
 /* ===== CONFIG ===== */
 const START_HOUR = 7;      // the grid always shows at least this range...
-const END_HOUR   = 22;     // ...and grows by itself if an event falls outside it
+const END_HOUR   = 23;     // ...and grows by itself if an event falls outside it
 const HOUR_H     = 40;     // pixels per hour
 const COLORS = { violet:"#8e8bf0", amber:"#e0a35a", cyan:"#5cc4dc", green:"#7fbf8a", rose:"#d4907c", beige:"#c4c2ac" };
 const STORE = "home-timetable";
@@ -140,7 +148,8 @@ function clean(list){
   return list.filter(e => e && Array.isArray(e.days) && !isNaN(toMin(e.start)) && !isNaN(toMin(e.end)) && toMin(e.end) > toMin(e.start))
     .map(e => ({ id: e.id || uid(), title: String(e.title || "Event").slice(0, 40),
       days: [...new Set(e.days.map(Number).filter(d => d >= 0 && d <= 6))], start: e.start, end: e.end,
-      color: COLORS[e.color] ? e.color : "violet" }));
+      color: COLORS[e.color] ? e.color : "violet",
+      week: /^\d{4}-\d{2}-\d{2}$/.test(e.week || "") ? e.week : null }));
 }
 
 /* ===== render ===== */
@@ -172,11 +181,22 @@ function layout(list){
   return out;
 }
 
+let weekOffset = 0;
+const MON = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+const isoDate = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+function shownMonday(){
+  const now = new Date(), idx = (now.getDay() + 6) % 7;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - idx + weekOffset * 7);
+}
 function render(){
   const tt = $("tt"); tt.textContent = "";
   const [h0, h1] = range(), rows = h1 - h0, H = HOUR_H;
-  const now = new Date(), todayIdx = (now.getDay() + 6) % 7;
-  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - todayIdx);
+  const now = new Date(), todayIdx = weekOffset === 0 ? (now.getDay() + 6) % 7 : -1;
+  const monday = shownMonday(), wkKey = isoDate(monday);
+  const sun = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+  $("wk").textContent = weekOffset === 0 ? "THIS WEEK" : weekOffset === 1 ? "NEXT WEEK" : weekOffset === -1 ? "LAST WEEK" :
+    monday.getDate() + " " + MON[monday.getMonth()] + " - " + sun.getDate() + " " + MON[sun.getMonth()];
+  $("wnow").style.visibility = weekOffset === 0 ? "hidden" : "visible";
 
   tt.appendChild(el("div", { class: "dh corner" }));
   for (let d = 0; d < 7; d++){
@@ -188,6 +208,7 @@ function render(){
   for (let i = 0; i < rows; i++){
     const l = el("div", { class: "tl", text: pad(h0 + i) + ":00" }); l.style.top = i * H + (i === 0 ? 8 : 0) + "px"; tcol.appendChild(l);
   }
+  const endL = el("div", { class: "tl", text: pad(h1 % 24) + ":00" }); endL.style.top = rows * H - 8 + "px"; tcol.appendChild(endL);
   tt.appendChild(tcol);
 
   const lineBg = "repeating-linear-gradient(to bottom,transparent 0,transparent " + (H - 1) + "px,color-mix(in srgb,var(--line) 55%,transparent) " + (H - 1) + "px," +
@@ -201,10 +222,10 @@ function render(){
       const hour = Math.min(h1 - 1, h0 + Math.floor(y / H));
       openForm(null, { days: [d], start: toStr(hour * 60), end: toStr(Math.min(24 * 60 - 5, (hour + 1) * 60)) });
     };
-    layout(events.filter(e => e.days.includes(d))).forEach(({ ev, lane, lanes }) => {
+    layout(events.filter(e => e.days.includes(d) && (!e.week || e.week === wkKey))).forEach(({ ev, lane, lanes }) => {
       const top = (toMin(ev.start) - h0 * 60) / 60 * H, height = Math.max(18, (toMin(ev.end) - toMin(ev.start)) / 60 * H - 2);
-      const b = el("div", { class: "ev", title: ev.title + " " + ev.start + " - " + ev.end, onclick: x => { x.stopPropagation(); openForm(ev); } },
-        el("b", { text: ev.title }), el("span", { text: ev.start + " - " + ev.end }));
+      const b = el("div", { class: "ev", title: (ev.week ? "this week only · " : "") + ev.title + " " + ev.start + " - " + ev.end, onclick: x => { x.stopPropagation(); openForm(ev); } },
+        el("b", { text: (ev.week ? "· " : "") + ev.title }), el("span", { text: ev.start + " - " + ev.end }));
       b.style.setProperty("--c", COLORS[ev.color]);
       b.style.top = top + 1 + "px"; b.style.height = height + "px";
       b.style.left = "calc(" + (lane / lanes * 100) + "% + 2px)"; b.style.width = "calc(" + (100 / lanes) + "% - 4px)";
@@ -238,6 +259,7 @@ function openForm(ev, pre){
   $("f-title").value = ev ? ev.title : "";
   fDays = new Set(src.days); fColor = ev ? ev.color : fColor;
   $("f-start").value = src.start; $("f-end").value = src.end;
+  $("f-rep").checked = ev ? !ev.week : true;
   $("f-save").textContent = ev ? "UPDATE" : "SAVE";
   $("f-del").style.display = ev ? "" : "none"; $("f-del").textContent = "DELETE";
   $("msg").textContent = "";
@@ -246,6 +268,9 @@ function openForm(ev, pre){
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function closeForm(){ $("form").classList.remove("open"); editingId = null; }
+$("wprev").onclick = () => { weekOffset--; render(); };
+$("wnext").onclick = () => { weekOffset++; render(); };
+$("wnow").onclick = () => { weekOffset = 0; render(); };
 $("new").onclick = () => $("form").classList.contains("open") ? closeForm() : openForm(null);
 $("f-cancel").onclick = closeForm;
 $("form").addEventListener("keydown", e => { if (e.key === "Escape") closeForm(); });
@@ -261,7 +286,9 @@ $("form").onsubmit = e => {
   if (!fDays.size){ $("msg").textContent = "pick at least one day"; return; }
   if (isNaN(s) || isNaN(en) || en <= s){ $("msg").textContent = "the end must be after the start (an event can't cross midnight: split it in two)"; return; }
   const data = { title, days: [...fDays].sort(), start: toStr(s), end: toStr(en), color: fColor };
-  if (editingId) Object.assign(events.find(x => x.id === editingId), data);
+  const old = editingId && events.find(x => x.id === editingId);
+  data.week = $("f-rep").checked ? null : (old && old.week) || isoDate(shownMonday());
+  if (editingId) Object.assign(old, data);
   else events.push({ id: uid(), ...data });
   save(); closeForm(); render();
 };

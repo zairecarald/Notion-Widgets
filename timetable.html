@@ -30,6 +30,7 @@
   .form input:focus,textarea:focus{border-color:var(--accent)}
   .row{display:flex;gap:10px;flex-wrap:wrap}
   .row > div{flex:1;min-width:120px}
+  .hintm{font-size:10px;color:var(--muted);margin-top:-4px}
   .days{display:flex;gap:6px;flex-wrap:wrap}
   .dbtn{width:38px;height:30px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:11px;cursor:pointer}
   .dbtn.on{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}
@@ -59,6 +60,14 @@
   .ev:hover{background:color-mix(in srgb,var(--c) 36%,var(--panel))}
   .ev b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ev span{display:block;font-size:10px;color:color-mix(in srgb,var(--text) 65%,transparent);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .ev.at{height:28px;padding:2px 6px}
+  .ev.before,.ev.after{background:none;border:1px dashed color-mix(in srgb,var(--c) 70%,transparent);border-left:3px solid var(--c)}
+  .ev.before{background:linear-gradient(to top,color-mix(in srgb,var(--c) 30%,var(--panel)),transparent)}
+  .ev.after{background:linear-gradient(to bottom,color-mix(in srgb,var(--c) 30%,var(--panel)),transparent)}
+  .ev.before:hover,.ev.after:hover{border-color:var(--c)}
+  .modes{display:flex;gap:6px;flex-wrap:wrap}
+  .mbtn{height:30px;padding:0 11px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:10px;letter-spacing:1px;cursor:pointer}
+  .mbtn.on{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}
   .now{position:absolute;left:0;right:0;border-top:1.5px solid var(--warn);z-index:3;pointer-events:none}
   .now::before{content:"";position:absolute;left:-4px;top:-5px;width:8px;height:8px;border-radius:50%;background:var(--warn)}
 
@@ -79,11 +88,13 @@
   <form class="form" id="form" autocomplete="off">
     <div><label>TITLE</label><input type="text" id="f-title" maxlength="40" placeholder="e.g. Work"></div>
     <div><label>DAYS</label><div class="days" id="f-days"></div></div>
+    <div><label>TYPE</label><div class="modes" id="f-modes"></div></div>
     <div class="row">
-      <div><label>START</label><input type="time" id="f-start" step="300"></div>
-      <div><label>END</label><input type="time" id="f-end" step="300"></div>
+      <div><label id="l-start">START</label><input type="time" id="f-start" step="300"></div>
+      <div id="w-end"><label>END</label><input type="time" id="f-end" step="300"></div>
     </div>
     <label class="chk"><input type="checkbox" id="f-rep" checked> repeat every week (untick for this week only)</label>
+    <div class="hintm" id="f-hint"></div>
     <div><label>COLOR</label><div class="swatches" id="f-sw"></div></div>
     <div class="btns">
       <button type="submit" class="btn" id="f-save">SAVE</button>
@@ -132,6 +143,28 @@ function el(tag, props, ...kids){
   return e;
 }
 
+/* ===== event types ===== */
+const MODES = { range:"RANGE", at:"AT", before:"BEFORE", after:"AFTER" };
+const MODE_HINT = {
+  range: "Starts and ends at a set time.",
+  at: "Only a time, no end. Good for a train or any plan with no fixed duration.",
+  before: "Loose: do it any time before this hour. Shown as a soft band ending there.",
+  after: "Loose: do it any time after this hour. Shown as a soft band starting there."
+};
+const modeOf = e => MODES[e.mode] ? e.mode : "range";
+function spanOf(e){
+  const s = toMin(e.start), m = modeOf(e);
+  if (m === "range") return [s, toMin(e.end)];
+  if (m === "at") return [s, Math.min(1440, s + 30)];
+  if (m === "before") return [Math.max(0, s - 60), s];
+  return [s, Math.min(1440, s + 60)];
+}
+const S = e => spanOf(e)[0], E = e => spanOf(e)[1];
+function label(e){
+  const m = modeOf(e);
+  return m === "range" ? e.start + " - " + e.end : m === "at" ? e.start : m + " " + e.start;
+}
+
 /* ===== data ===== */
 let events = [];
 function load(){
@@ -145,9 +178,11 @@ function save(){
   catch(e){ $("warn").style.display = "block"; }
 }
 function clean(list){
-  return list.filter(e => e && Array.isArray(e.days) && !isNaN(toMin(e.start)) && !isNaN(toMin(e.end)) && toMin(e.end) > toMin(e.start))
+  return list.filter(e => e && Array.isArray(e.days) && !isNaN(toMin(e.start)) &&
+      (modeOf(e) !== "range" || (!isNaN(toMin(e.end)) && toMin(e.end) > toMin(e.start))))
     .map(e => ({ id: e.id || uid(), title: String(e.title || "Event").slice(0, 40),
-      days: [...new Set(e.days.map(Number).filter(d => d >= 0 && d <= 6))], start: e.start, end: e.end,
+      days: [...new Set(e.days.map(Number).filter(d => d >= 0 && d <= 6))], start: e.start,
+      mode: modeOf(e), end: modeOf(e) === "range" ? e.end : "",
       color: COLORS[e.color] ? e.color : "violet",
       week: /^\d{4}-\d{2}-\d{2}$/.test(e.week || "") ? e.week : null }));
 }
@@ -155,27 +190,27 @@ function clean(list){
 /* ===== render ===== */
 function range(){
   let a = START_HOUR, b = END_HOUR;
-  events.forEach(e => { a = Math.min(a, Math.floor(toMin(e.start) / 60)); b = Math.max(b, Math.ceil(toMin(e.end) / 60)); });
+  events.forEach(e => { a = Math.min(a, Math.floor(S(e) / 60)); b = Math.max(b, Math.ceil(E(e) / 60)); });
   return [a, Math.min(24, b)];
 }
 /* side-by-side lanes for overlapping events of one day */
 function layout(list){
-  const sorted = [...list].sort((x, y) => toMin(x.start) - toMin(y.start) || toMin(y.end) - toMin(x.end));
+  const sorted = [...list].sort((x, y) => S(x) - S(y) || E(y) - E(x));
   const out = []; let cluster = [], clusterEnd = -1;
   const flush = () => {
     if (!cluster.length) return;
     const lanesEnd = [];
     cluster.forEach(ev => {
-      let l = lanesEnd.findIndex(end => end <= toMin(ev.start));
+      let l = lanesEnd.findIndex(end => end <= S(ev));
       if (l < 0){ l = lanesEnd.length; lanesEnd.push(0); }
-      lanesEnd[l] = toMin(ev.end); ev._lane = l;
+      lanesEnd[l] = E(ev); ev._lane = l;
     });
     cluster.forEach(ev => out.push({ ev, lane: ev._lane, lanes: lanesEnd.length }));
     cluster = [];
   };
   sorted.forEach(ev => {
-    if (toMin(ev.start) >= clusterEnd) flush();
-    cluster.push(ev); clusterEnd = Math.max(clusterEnd < 0 || cluster.length === 1 ? 0 : clusterEnd, toMin(ev.end));
+    if (S(ev) >= clusterEnd) flush();
+    cluster.push(ev); clusterEnd = Math.max(clusterEnd < 0 || cluster.length === 1 ? 0 : clusterEnd, E(ev));
   });
   flush();
   return out;
@@ -223,11 +258,11 @@ function render(){
       openForm(null, { days: [d], start: toStr(hour * 60), end: toStr(Math.min(24 * 60 - 5, (hour + 1) * 60)) });
     };
     layout(events.filter(e => e.days.includes(d) && (!e.week || e.week === wkKey))).forEach(({ ev, lane, lanes }) => {
-      const top = (toMin(ev.start) - h0 * 60) / 60 * H, height = Math.max(18, (toMin(ev.end) - toMin(ev.start)) / 60 * H - 2);
-      const b = el("div", { class: "ev", title: (ev.week ? "this week only · " : "") + ev.title + " " + ev.start + " - " + ev.end, onclick: x => { x.stopPropagation(); openForm(ev); } },
-        el("b", { text: (ev.week ? "· " : "") + ev.title }), el("span", { text: ev.start + " - " + ev.end }));
+      const top = (S(ev) - h0 * 60) / 60 * H, height = Math.max(18, (E(ev) - S(ev)) / 60 * H - 2);
+      const b = el("div", { class: "ev " + modeOf(ev), title: (ev.week ? "this week only · " : "") + ev.title + " " + label(ev), onclick: x => { x.stopPropagation(); openForm(ev); } },
+        el("b", { text: (ev.week ? "· " : "") + ev.title }), el("span", { text: label(ev) }));
       b.style.setProperty("--c", COLORS[ev.color]);
-      b.style.top = top + 1 + "px"; b.style.height = height + "px";
+      b.style.top = top + 1 + "px"; if (modeOf(ev) !== "at") b.style.height = height + "px";
       b.style.left = "calc(" + (lane / lanes * 100) + "% + 2px)"; b.style.width = "calc(" + (100 / lanes) + "% - 4px)";
       col.appendChild(b);
     });
@@ -240,11 +275,19 @@ function render(){
 }
 
 /* ===== form ===== */
-let editingId = null, fDays = new Set(), fColor = "violet";
+let editingId = null, fDays = new Set(), fColor = "violet", fMode = "range";
 function drawDays(){
   const box = $("f-days"); box.textContent = "";
   DAY_LETTERS.forEach((l, i) => box.appendChild(el("button", { type: "button", class: "dbtn" + (fDays.has(i) ? " on" : ""), title: DAY_NAMES[i], text: l,
     onclick: () => { fDays.has(i) ? fDays.delete(i) : fDays.add(i); drawDays(); } })));
+}
+function drawModes(){
+  const box = $("f-modes"); box.textContent = "";
+  Object.keys(MODES).forEach(k => box.appendChild(el("button", { type: "button", class: "mbtn" + (k === fMode ? " on" : ""), text: MODES[k],
+    onclick: () => { fMode = k; drawModes(); } })));
+  $("w-end").style.display = fMode === "range" ? "" : "none";
+  $("l-start").textContent = fMode === "range" ? "START" : "TIME";
+  $("f-hint").textContent = MODE_HINT[fMode];
 }
 function drawSwatches(){
   const box = $("f-sw"); box.textContent = "";
@@ -258,7 +301,8 @@ function openForm(ev, pre){
   const src = ev || pre || { days: [], start: "09:00", end: "10:00" };
   $("f-title").value = ev ? ev.title : "";
   fDays = new Set(src.days); fColor = ev ? ev.color : fColor;
-  $("f-start").value = src.start; $("f-end").value = src.end;
+  $("f-start").value = src.start; $("f-end").value = src.end || "10:00";
+  fMode = ev ? modeOf(ev) : "range"; drawModes();
   $("f-rep").checked = ev ? !ev.week : true;
   $("f-save").textContent = ev ? "UPDATE" : "SAVE";
   $("f-del").style.display = ev ? "" : "none"; $("f-del").textContent = "DELETE";
@@ -284,8 +328,9 @@ $("form").onsubmit = e => {
   const title = $("f-title").value.trim(), s = toMin($("f-start").value), en = toMin($("f-end").value);
   if (!title){ $("msg").textContent = "add a title"; $("f-title").focus(); return; }
   if (!fDays.size){ $("msg").textContent = "pick at least one day"; return; }
-  if (isNaN(s) || isNaN(en) || en <= s){ $("msg").textContent = "the end must be after the start (an event can't cross midnight: split it in two)"; return; }
-  const data = { title, days: [...fDays].sort(), start: toStr(s), end: toStr(en), color: fColor };
+  if (isNaN(s)){ $("msg").textContent = "pick a time"; return; }
+  if (fMode === "range" && (isNaN(en) || en <= s)){ $("msg").textContent = "the end must be after the start (an event can't cross midnight: split it in two)"; return; }
+  const data = { title, days: [...fDays].sort(), start: toStr(s), end: fMode === "range" ? toStr(en) : "", mode: fMode, color: fColor };
   const old = editingId && events.find(x => x.id === editingId);
   data.week = $("f-rep").checked ? null : (old && old.week) || isoDate(shownMonday());
   if (editingId) Object.assign(old, data);

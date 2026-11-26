@@ -64,21 +64,21 @@
   .tl{position:absolute;right:8px;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;transform:translateY(-50%)}
   .dcol{position:relative;border-left:1px solid color-mix(in srgb,var(--line) 55%,transparent);cursor:cell}
   .dcol.today{background-color:color-mix(in srgb,var(--text) 3%,transparent)}
-  .ev{--c:#8e8bf0;position:absolute;border-radius:6px;padding:3px 6px;font-size:11px;overflow:hidden;cursor:pointer;
-      background:color-mix(in srgb,var(--c) 26%,var(--panel));border-left:3px solid var(--c);line-height:1.3}
+  .ev{--c:#8e8bf0;position:absolute;border-radius:6px;padding:3px 6px;font-size:11px;overflow:hidden;cursor:pointer;text-align:center;
+      background:color-mix(in srgb,var(--c) 26%,var(--panel));border:2px solid var(--c);line-height:1.3}
   .ev:hover{background:color-mix(in srgb,var(--c) 36%,var(--panel))}
   .ev b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ev span{display:block;font-size:10px;color:color-mix(in srgb,var(--text) 65%,transparent);font-variant-numeric:tabular-nums;white-space:nowrap}
-  /* AT: pencil shape, the tip on the left marks the exact time */
-  .ev.at{height:26px;padding:3px 6px 3px 18px;border-left:0;border-radius:0 5px 5px 0;
-         background:color-mix(in srgb,var(--c) 38%,var(--panel));
-         clip-path:polygon(0 50%,13px 0,100% 0,100% 100%,13px 100%)}
-  .ev.at:hover{background:color-mix(in srgb,var(--c) 50%,var(--panel))}
-  .ev.at b,.ev.at span{display:inline;font-size:11px}
-  .ev.at span{margin-left:6px}
+  /* AT: pencil shape (outline included), the tip on the left marks the exact time */
+  .ev.at{height:26px;padding:0 6px 0 18px;border:0;border-radius:0;background:var(--c);
+         clip-path:polygon(0 50%,13px 0,100% 0,100% 100%,13px 100%);display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+  .ev.at::before{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--c) 30%,var(--panel));
+         clip-path:polygon(2.83px 50%,13.83px 2px,calc(100% - 2px) 2px,calc(100% - 2px) calc(100% - 2px),13.83px calc(100% - 2px))}
+  .ev.at:hover::before{background:color-mix(in srgb,var(--c) 42%,var(--panel))}
+  .ev.at b,.ev.at span{position:relative;display:inline;font-size:11px}
   /* BEFORE / AFTER: like a range, with a dashed line on the edge that marks the time */
-  .ev.before{border-bottom:2px dashed var(--c);border-radius:6px 6px 0 0}
-  .ev.after{border-top:2px dashed var(--c);border-radius:0 0 6px 6px}
+  .ev.before{border-bottom-style:dashed}
+  .ev.after{border-top-style:dashed}
   .modes{display:flex;gap:6px;flex-wrap:wrap}
   .mbtn{height:30px;padding:0 11px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:10px;letter-spacing:1px;cursor:pointer}
   .mbtn.on{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}

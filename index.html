@@ -23,8 +23,7 @@
   main{max-width:880px;margin:0;padding:20px 16px 28px}
 
   #greet{font-weight:800;font-size:clamp(22px,4.6vw,38px);line-height:1.2;letter-spacing:-.5px;cursor:pointer;
-         padding-left:14px;border-left:3px solid var(--text);margin-bottom:6px}
-  .hint{color:var(--muted);font-size:11px;margin:0 0 26px 17px}
+         padding-left:14px;border-left:3px solid var(--text);margin-bottom:26px}
 
   .row{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:26px}
   @media(max-width:640px){.row{grid-template-columns:1fr;gap:20px}}
@@ -65,7 +64,6 @@
 <body>
 <main>
   <h1 id="greet" title="click for another greeting"></h1>
-  <p class="hint">click the greeting to change it</p>
 
   <section class="row">
     <div class="clock">
@@ -129,9 +127,25 @@ const GREETINGS = {
     "Quiet hours, loud ideas, {name}",
     "The world is asleep. You’re the main character, {name}",
     "Even the moon is yawning, {name}",
-    "Night owl mode: activated, {name}"
+    "Night owl mode: activated, {name}",
+    "The dark is just the sky showing its work, {name}",
+    "Somewhere a clock is whispering secrets, {name}",
+    "The city dreams out loud and you’re listening, {name}",
+    "Insomnia is just the universe leaving the door open, {name}",
+    "The streetlights are keeping your secrets, {name}",
+    "Wide awake in the velvet hours, {name}",
+    "Constellations are clocking in for the night shift, {name}",
+    "The hour of ghosts and good ideas, {name}",
+    "Silence has a frequency, and you’re tuned to it, {name}",
+    "The night is a cathedral and you’re its only candle, {name}",
+    "Three a.m. philosophers, assemble. Hello, {name}",
+    "Moonlight is the cheapest lamp, {name}",
+    "The sky forgot to turn off the stars, {name}",
+    "Dawn is still packing its bags, {name}",
+    "Between yesterday and tomorrow there is you, {name}",
+    "Even the shadows are tiptoeing around you, {name}"
   ],
-  morning: [      // 06:00 - 11:59
+  morning: [   // 06:00 - 11:59
     "Rise and conquer, {name}",
     "The sun clocked in early for you, {name}",
     "Fresh day, fresh save file, {name}",
@@ -139,34 +153,100 @@ const GREETINGS = {
     "Coffee first, destiny second, {name}",
     "New quest unlocked, {name}",
     "The day is a blank page, {name}",
-    "Wake up and be mildly legendary, {name}"
+    "Wake up and be mildly legendary, {name}",
+    "The horizon just poured you a cup of gold, {name}",
+    "Dawn spilled its paint across the sky for you, {name}",
+    "A brand new day, still wrapped, {name}",
+    "The morning hums and you are its melody, {name}",
+    "Light climbs the walls to say hello, {name}",
+    "Today is a rumor of greatness, {name}",
+    "The rooster is overrated, the sunrise is for you, {name}",
+    "Open the curtains, open the chapter, {name}",
+    "The world rebooted overnight. You’re welcome, {name}",
+    "Sunrise doesn’t ask permission, neither should you, {name}",
+    "Morning dew, morning crew, {name}",
+    "The sky is blushing at how good today looks, {name}",
+    "Yesterday is a closed book. Page one awaits, {name}",
+    "The day yawns, stretches, and looks at you, {name}",
+    "Dawn light, quiet courage, {name}",
+    "Another sunrise, another excuse to shine, {name}",
+    "Today’s forecast: ambition with scattered brilliance, {name}"
   ],
-  midday: [    // 12:00 - 15:59
+  midday: [   // 12:00 - 15:59
     "High noon, {name}. Make it count",
     "The sun is at its peak and so are you, {name}",
     "Refuel, {name}. Heroes eat lunch too",
     "Halfway through the day, {name}. Keep the momentum",
     "Lunch break loading, {name}",
     "Main quest continues, {name}",
-    "Midday already? Time flies when you’re winning, {name}"
+    "Midday already? Time flies when you’re winning, {name}",
+    "The sun stands directly above your plans, {name}",
+    "Shadows are shortest when you stand tallest, {name}",
+    "The day balances on the tip of noon, {name}",
+    "Gold light, sharp focus, {name}",
+    "The clock hands are shaking yours, {name}",
+    "Noon sings and the afternoon is listening, {name}",
+    "The sky is wide open and so are your options, {name}",
+    "Peak daylight, peak potential, {name}",
+    "Half a day behind you, half a legend ahead, {name}",
+    "The sun is showing off again, {name}",
+    "Bright hours are for bold moves, {name}",
+    "Even the shadows are taking a lunch break, {name}",
+    "Heat shimmers, ideas simmer, {name}",
+    "The afternoon is a runway, {name}",
+    "Midday has the whole sky as its stage, {name}",
+    "Keep the engine humming, {name}"
   ],
-  evening: [       // 16:00 - 20:59
+  evening: [   // 16:00 - 20:59
     "Golden hour has your name on it, {name}",
     "Still plenty of daylight to use, {name}",
     "The sun is leaning on the horizon, {name}",
     "Sidequests are optional, {name}. The vibes are not",
     "The day is winding down, you’re not, {name}",
     "Soft light, sharp mind, {name}",
-    "Evening, {name}. One more good move?"
+    "Evening, {name}. One more good move?",
+    "The sky is melting into honey and rose, {name}",
+    "Amber light on everything you’ve built today, {name}",
+    "The sun is taking a slow, dramatic bow, {name}",
+    "Dusk paints in warm colors, {name}",
+    "Long shadows, longer ambitions, {name}",
+    "The horizon is blushing, {name}",
+    "The day exhales and you may as well, {name}",
+    "Twilight is knocking, bring your best ideas, {name}",
+    "The light is leaving gracefully, take notes, {name}",
+    "Evening spills over the rooftops, {name}",
+    "A sky like a half-finished poem, {name}",
+    "Sunset is the day’s encore, {name}",
+    "The clouds are dressed in copper tonight, {name}",
+    "Daylight is a rental, use it wisely, {name}",
+    "Closing arguments of the sun, {name}",
+    "Violet edges on the afternoon, {name}"
   ],
-  night: [       // 21:00 - 23:59
+  night: [   // 21:00 - 23:59
     "Time to power down the engines, {name}",
     "The night is young and so are you, {name}",
     "Lights low, mind high, {name}",
     "Welcome back to the calm, {name}",
     "Close the day like a legend, {name}",
     "The moon is clocking in, {name}",
-    "Good night soon, {name}. You earned it"
+    "Good night soon, {name}. You earned it",
+    "The stars are unrolling their carpet, {name}",
+    "The sky changed into its velvet coat, {name}",
+    "Night arrives wearing constellations, {name}",
+    "The day folds itself away, {name}",
+    "Fireflies of thought are waking up, {name}",
+    "Dim the world, brighten the mind, {name}",
+    "The moon is rehearsing its silver speech, {name}",
+    "A blanket of dark, stitched with stars, {name}",
+    "Lamps on, worries off, {name}",
+    "The city turns its lights into constellations, {name}",
+    "Let the evening hum its lullaby, {name}",
+    "You carried the whole day. Set it down, {name}",
+    "Nightfall: the world’s softest notification, {name}",
+    "Somewhere the sunset is still lingering, {name}",
+    "The dark is gentle tonight, {name}",
+    "Every star is a tiny reason to rest, {name}",
+    "Tonight belongs to the quiet ones, {name}"
   ]
 };
 

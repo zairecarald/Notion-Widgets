@@ -19,8 +19,9 @@
   #ytwrap{width:200px;height:200px;border-radius:8px;overflow:hidden;background:#000;flex:none}
   .info{flex:1;min-width:190px;display:flex;flex-direction:column;gap:9px}
   select{background:var(--bg);color:var(--accent);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:12px;font-weight:700;padding:5px 6px;cursor:pointer;width:100%}
-  #title{font-weight:700;font-size:14px;line-height:1.3;min-height:36px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  #status{font-size:11px;color:var(--muted);min-height:14px}
+  #title{font-weight:700;font-size:14px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  #status{font-size:11px;color:var(--muted)}
+  #status:empty{display:none}
   .seekwrap{position:relative;padding-top:12px;cursor:pointer}
   .seek{position:relative;height:8px;border:1.5px solid var(--line);border-radius:5px;overflow:hidden}
   .seek i{display:block;height:100%;width:0;background:var(--bar)}

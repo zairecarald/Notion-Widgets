@@ -31,8 +31,9 @@
   .ctrl button{font:inherit;cursor:pointer;border-radius:6px}
   #go{background:var(--pt);color:var(--pb);border:0;font-weight:800;font-size:15px;padding:9px 30px;min-width:104px}
   #reset{background:transparent;color:var(--text);border:1px solid var(--line);font-size:15px;padding:8px 12px}
-  .sp{display:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px;margin-bottom:12px;gap:10px;flex-direction:column}
-  .sp.open{display:flex}
+  .sp{display:none;gap:12px;flex-direction:column;text-align:left}
+  .card.set .sp{display:flex}
+  .card.set > :not(.sp){display:none}
   .sp label{font-size:10px;letter-spacing:1.5px;color:var(--muted)}
   .sp .r{display:flex;gap:8px;align-items:center}
   .sp .sw{width:22px;height:22px;border-radius:6px;border:2px solid transparent;cursor:pointer;padding:0}
@@ -48,8 +49,8 @@
 <body>
 <main>
   <div class="top"><h2>POMODORO</h2><button class="gear" id="gear" title="settings"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button></div>
-  <div class="sp" id="sp"><label>TIME OPTIONS (MINUTES)</label><div class="r" id="dlist"></div><label>COLOR</label><div class="r" id="colsw"></div></div>
-  <div class="card">
+  <div class="card" id="card">
+    <div class="sp" id="sp"><label>TIME OPTIONS (MINUTES)</label><div class="r" id="dlist"></div><label>COLOR</label><div class="r" id="colsw"></div></div>
     <div class="modes" id="modes"></div>
     <div id="time">20:00</div>
     <div class="track"><i id="prog"></i></div>
@@ -163,8 +164,9 @@ function drawSettings(){
   }
 }
 $("#gear").onclick = () => {
-  const open = !$("#sp").classList.contains("open");
-  $("#sp").classList.toggle("open", open); $("#gear").classList.toggle("on", open);
+  const card = $("#card"), open = !card.classList.contains("set");
+  card.style.minHeight = open ? card.offsetHeight + "px" : "";
+  card.classList.toggle("set", open); $("#gear").classList.toggle("on", open);
   if (open) drawSettings();
 };
 applyColor();

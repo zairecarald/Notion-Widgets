@@ -19,8 +19,16 @@
   .gear{background:transparent;border:1px solid var(--line);border-radius:14px;width:30px;height:25px;display:grid;place-content:center;cursor:pointer;color:var(--muted)}
   .gear:hover{border-color:var(--muted);color:var(--text)}
   .gear.on{color:var(--accent);border-color:var(--accent)}
-  .qedit{display:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px;gap:6px;flex-direction:column}
-  .qedit.open{display:flex}
+  #ov{display:none;position:fixed;inset:0;background:var(--bg);z-index:20;overflow:auto;padding:12px 10px 18px;flex-direction:column;gap:12px}
+  #ov.open{display:flex}
+  .ovh{display:flex;justify-content:space-between;align-items:center}
+  .pill{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:14px;font:inherit;font-size:10px;letter-spacing:1px;padding:4px 11px;cursor:pointer}
+  .pill:hover{border-color:var(--muted)}
+  .qedit{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px;gap:6px;display:flex;flex-direction:column}
+  .cr{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px;padding:3px 2px}
+  .cr .sws{display:flex;gap:6px}
+  .sw{width:20px;height:20px;border-radius:6px;border:2px solid transparent;cursor:pointer;padding:0}
+  .sw.on{border-color:var(--text)}
   .qe{display:flex;gap:4px;align-items:center}
   .qe input{min-width:0;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:11px;padding:5px 6px;outline:none}
   .qe input:focus{border-color:var(--accent)}
@@ -79,9 +87,14 @@
 </head>
 <body>
 <main>
-  <section class="sec"><div class="sech"><h2>QUICK-ACTION</h2><button class="gear" id="gear" title="edit quick actions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button></div><div class="quick" id="quick"></div><div class="qedit" id="qedit"></div></section>
+  <section class="sec"><div class="sech"><h2>QUICK-ACTION</h2><button class="gear" id="gear" title="edit quick actions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button></div><div class="quick" id="quick"></div></section>
   <section class="sec"><h2>GOAL TRACKER</h2><div id="goals" class="sec"></div></section>
   <section id="groups"></section>
+  <div id="ov">
+    <div class="ovh"><h2>SETTINGS</h2><button class="pill" id="close">CLOSE</button></div>
+    <h2>QUICK ACTIONS</h2><div class="qedit" id="qedit"></div>
+    <h2>COLORS</h2><div class="qedit" id="cedit"></div>
+  </div>
   <div id="warn">this browser doesn't allow saving data here: goal progress will be lost on reload</div>
 </main>
 
@@ -93,7 +106,7 @@
    Edit the cards by clicking them. Later they can be fed by your apps.
    ==================================================================== */
 const GOALS = [
-  { id: "league", name: "League", goal: "Reach Diamond", type: "steps", color: "violet",
+  { id: "league", name: "League", goal: "Reach Diamond", type: "steps", color: "rose",
     steps: ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Emerald", "Diamond"] },
   { id: "french", name: "French", goal: "200 terms learned in my app", type: "count", color: "cyan",
     target: 200, unit: "terms" }
@@ -115,16 +128,16 @@ const QUICK_DEFAULT = [
    url = the Notion page (open it in Notion, "Share" > "Copy link").
    ==================================================================== */
 const GROUPS = [
-  { name: "Study", color: "violet", items: [
+  { name: "Study", color: "cyan", items: [
     { name: "Languages", url: "https://app.notion.com/p/4235cfe181fd81938ff1f8f15ed827ad" },
     { name: "Skills",    url: "https://app.notion.com/p/4235cfe181fd810da987f2fa45f41460" }
   ]},
-  { name: "Personal", color: "cyan", items: [
+  { name: "Personal", color: "rose", items: [
     { name: "LoL Games", url: "https://app.notion.com/p/41f5cfe181fd814c8b27e2625a5c1bb2" },
     { name: "Journal",   url: "https://app.notion.com/p/4235cfe181fd81da9624c99e8c0a7da6" },
     { name: "Wishlist",  url: "https://app.notion.com/p/4235cfe181fd818597f9d7cad0cce194" }
   ]},
-  { name: "Future", color: "amber", items: [
+  { name: "Future", color: "cyan", items: [
     { name: "Plans", url: "https://app.notion.com/p/4235cfe181fd814ab7d5cfba073f9e6c" },
     { name: "Ideas", url: "https://app.notion.com/p/4235cfe181fd817d89a7c03c6c40dfcd" }
   ]}
@@ -173,7 +186,7 @@ function renderGoals(){
   GOALS.forEach(g => {
     const m = measure(g), pct = Math.round(m.p * 100);
     const card = el("div", { class: "goal" + (openId === g.id ? " open" : "") });
-    card.style.setProperty("--c", col(g.color));
+    card.style.setProperty("--c", pick("goal:" + g.id, g.color));
     card.onclick = () => { openId = openId === g.id ? null : g.id; renderGoals(); };
 
     card.appendChild(el("div", { class: "g-head" }, el("b", { text: g.name }), el("span", { text: pct + "%" })));
@@ -230,12 +243,12 @@ function renderQuick(){
 function renderGroups(){
   const box = $("groups"); box.textContent = "";
   GROUPS.forEach(gr => {
-    const h = el("h3", { text: gr.name.toUpperCase() }); h.style.setProperty("--c", col(gr.color));
+    const h = el("h3", { text: gr.name.toUpperCase() }); h.style.setProperty("--c", pick("grp:" + gr.name, gr.color));
     const items = el("div", { class: "gitems" });
     if (!gr.items.length) items.appendChild(el("div", { class: "none", text: "no pages yet" }));
     gr.items.forEach(it => {
       const a = el("a", { class: "item", href: it.url, target: "_blank", rel: "noopener noreferrer" }, el("i"), el("span", { text: it.name }));
-      a.style.setProperty("--c", col(gr.color));
+      a.style.setProperty("--c", pick("grp:" + gr.name, gr.color));
       items.appendChild(a);
     });
     box.appendChild(el("div", { class: "group" }, h, items));
@@ -261,7 +274,26 @@ function renderQEdit(){
   } })));
   box.appendChild(el("div", { class: "qhint", text: "Links must start with https://" }));
 }
-$("gear").onclick = () => { const o = !$("qedit").classList.contains("open"); $("qedit").classList.toggle("open", o); $("gear").classList.toggle("on", o); if (o) renderQEdit(); };
+/* colours: one per goal card and per page group (default, rose or cyan) */
+const PAL = { default: "#c4c2ac", rose: "#d4907c", cyan: "#5cc4dc" };
+let ccol = {};
+try { ccol = JSON.parse(localStorage.getItem("home-colors")) || {}; } catch(e){}
+function renderCEdit(){
+  const box = $("cedit"); box.textContent = "";
+  const rows = [...GOALS.map(g => ["goal:" + g.id, g.name]), ...GROUPS.map(g => ["grp:" + g.name, g.name])];
+  rows.forEach(([key, label]) => {
+    const sws = el("div", { class: "sws" });
+    Object.keys(PAL).forEach(k => {
+      const b = el("button", { type: "button", class: "sw" + ((ccol[key] || "") === k ? " on" : ""), title: k,
+        onclick: () => { ccol[key] = k; try { localStorage.setItem("home-colors", JSON.stringify(ccol)); } catch(e){} renderGoals(); renderGroups(); renderCEdit(); } });
+      b.style.background = PAL[k]; sws.appendChild(b);
+    });
+    box.appendChild(el("div", { class: "cr" }, el("span", { text: label }), sws));
+  });
+}
+const pick = (key, def) => PAL[ccol[key]] || col(def);
+$("gear").onclick = () => { $("ov").classList.add("open"); renderQEdit(); renderCEdit(); };
+$("close").onclick = () => $("ov").classList.remove("open");
 renderQuick(); renderGoals(); renderGroups();
 window.addEventListener("storage", e => {
   if (e.key === STORE){ try { state = JSON.parse(e.newValue) || {}; } catch(x){ state = {}; } renderGoals(); }

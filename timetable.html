@@ -16,6 +16,15 @@
   .top h2{font-size:11px;letter-spacing:2px;font-weight:700;color:var(--muted)}
   .pill{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:14px;font:inherit;font-size:10px;letter-spacing:1px;padding:4px 11px;cursor:pointer}
   .pill:hover{border-color:var(--muted)}
+  .gear{background:transparent;border:1px solid var(--line);border-radius:14px;width:30px;height:25px;display:grid;place-content:center;cursor:pointer;color:var(--muted)}
+  .gear:hover{border-color:var(--muted);color:var(--text)}
+  .gear.on{color:var(--accent);border-color:var(--accent)}
+  .rt{display:flex;gap:8px;align-items:center}
+  .set{display:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px;margin-bottom:12px;gap:10px;flex-direction:column}
+  .set.open{display:flex}
+  .set .r2{display:flex;gap:10px;align-items:center;font-size:10px;letter-spacing:1.5px;color:var(--muted)}
+  .set input[type=number]{width:62px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:12px;padding:6px 8px;outline:none;text-align:center}
+  .set input:focus{border-color:var(--accent)}
   .nav{display:flex;align-items:center;gap:6px}
   .nav .pill{padding:4px 9px}
   #wk{font-size:10px;letter-spacing:1.5px;color:var(--muted);min-width:118px;text-align:center;font-variant-numeric:tabular-nums}
@@ -60,11 +69,16 @@
   .ev:hover{background:color-mix(in srgb,var(--c) 36%,var(--panel))}
   .ev b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ev span{display:block;font-size:10px;color:color-mix(in srgb,var(--text) 65%,transparent);font-variant-numeric:tabular-nums;white-space:nowrap}
-  .ev.at{height:28px;padding:2px 6px}
-  .ev.before,.ev.after{background:none;border:1px dashed color-mix(in srgb,var(--c) 70%,transparent);border-left:3px solid var(--c)}
-  .ev.before{background:linear-gradient(to top,color-mix(in srgb,var(--c) 30%,var(--panel)),transparent)}
-  .ev.after{background:linear-gradient(to bottom,color-mix(in srgb,var(--c) 30%,var(--panel)),transparent)}
-  .ev.before:hover,.ev.after:hover{border-color:var(--c)}
+  /* AT: pencil shape, the tip on the left marks the exact time */
+  .ev.at{height:26px;padding:3px 6px 3px 18px;border-left:0;border-radius:0 5px 5px 0;
+         background:color-mix(in srgb,var(--c) 38%,var(--panel));
+         clip-path:polygon(0 50%,13px 0,100% 0,100% 100%,13px 100%)}
+  .ev.at:hover{background:color-mix(in srgb,var(--c) 50%,var(--panel))}
+  .ev.at b,.ev.at span{display:inline;font-size:11px}
+  .ev.at span{margin-left:6px}
+  /* BEFORE / AFTER: like a range, with a dashed line on the edge that marks the time */
+  .ev.before{border-bottom:2px dashed var(--c);border-radius:6px 6px 0 0}
+  .ev.after{border-top:2px dashed var(--c);border-radius:0 0 6px 6px}
   .modes{display:flex;gap:6px;flex-wrap:wrap}
   .mbtn{height:30px;padding:0 11px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:10px;letter-spacing:1px;cursor:pointer}
   .mbtn.on{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}
@@ -83,7 +97,18 @@
 <main>
   <div class="top"><h2>TIMETABLE</h2>
     <div class="nav"><button class="pill" id="wprev" title="previous week">&lt;</button><span id="wk"></span><button class="pill" id="wnext" title="next week">&gt;</button><button class="pill" id="wnow" title="back to this week">TODAY</button></div>
-    <button class="pill" id="new">+ NEW</button></div>
+    <div class="rt"><button class="gear" id="gear" title="settings"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button><button class="pill" id="new">+ NEW</button></div></div>
+
+  <div class="set" id="set">
+    <div class="r2"><span>VISIBLE HOURS</span><input type="number" id="s-from" min="0" max="23"><span>TO</span><input type="number" id="s-to" min="1" max="24"><span id="s-msg" style="letter-spacing:0"></span></div>
+    <div class="hint">The grid grows by itself if an event falls outside this range.</div>
+    <div class="hint" style="letter-spacing:1.5px;margin-top:4px">BACKUP</div>
+    <div class="backup open" id="backup" style="display:flex;margin-top:0">
+      <div class="hint">Copy this text and keep it wherever you like. To restore your timetable or move it to another browser, paste it here and press RESTORE.</div>
+      <textarea id="bk-text" spellcheck="false"></textarea>
+      <div class="btns"><button class="btn ghost" id="bk-restore">RESTORE</button><span class="hint" id="bk-msg"></span></div>
+    </div>
+  </div>
 
   <form class="form" id="form" autocomplete="off">
     <div><label>TITLE</label><input type="text" id="f-title" maxlength="40" placeholder="e.g. Work"></div>
@@ -106,19 +131,14 @@
 
   <div class="scroll"><div class="tt" id="tt"></div></div>
 
-  <div class="foot"><button class="pill" id="bk-toggle">BACKUP</button></div>
-  <div class="backup" id="backup">
-    <div class="hint">Copy this text and keep it wherever you like. To restore your timetable or move it to another browser, paste it here and press RESTORE.</div>
-    <textarea id="bk-text" spellcheck="false"></textarea>
-    <div class="btns"><button class="btn ghost" id="bk-restore">RESTORE</button><span class="hint" id="bk-msg"></span></div>
-  </div>
   <div id="warn">this browser doesn't allow saving data here: your timetable will be lost on reload</div>
 </main>
 
 <script>
 /* ===== CONFIG ===== */
-const START_HOUR = 7;      // the grid always shows at least this range...
-const END_HOUR   = 23;     // ...and grows by itself if an event falls outside it
+let START_HOUR = 7;        // the grid always shows at least this range (change it with the settings button)...
+let END_HOUR   = 23;       // ...and grows by itself if an event falls outside it
+try { const r = JSON.parse(localStorage.getItem("home-tt-range")); if (r && r[0] >= 0 && r[1] <= 24 && r[0] < r[1]){ START_HOUR = r[0]; END_HOUR = r[1]; } } catch(e){}
 const HOUR_H     = 40;     // pixels per hour
 const COLORS = { violet:"#8e8bf0", amber:"#e0a35a", cyan:"#5cc4dc", green:"#7fbf8a", rose:"#d4907c", beige:"#c4c2ac" };
 const STORE = "home-timetable";
@@ -258,11 +278,11 @@ function render(){
       openForm(null, { days: [d], start: toStr(hour * 60), end: toStr(Math.min(24 * 60 - 5, (hour + 1) * 60)) });
     };
     layout(events.filter(e => e.days.includes(d) && (!e.week || e.week === wkKey))).forEach(({ ev, lane, lanes }) => {
-      const top = (S(ev) - h0 * 60) / 60 * H, height = Math.max(18, (E(ev) - S(ev)) / 60 * H - 2);
+      const top = (S(ev) - h0 * 60) / 60 * H - (modeOf(ev) === "at" ? 13 : 0), height = Math.max(18, (E(ev) - S(ev)) / 60 * H - 2);
       const b = el("div", { class: "ev " + modeOf(ev), title: (ev.week ? "this week only · " : "") + ev.title + " " + label(ev), onclick: x => { x.stopPropagation(); openForm(ev); } },
         el("b", { text: (ev.week ? "· " : "") + ev.title }), el("span", { text: label(ev) }));
       b.style.setProperty("--c", COLORS[ev.color]);
-      b.style.top = top + 1 + "px"; if (modeOf(ev) !== "at") b.style.height = height + "px";
+      b.style.top = (modeOf(ev) === "at" ? top : top + 1) + "px"; if (modeOf(ev) !== "at") b.style.height = height + "px";
       b.style.left = "calc(" + (lane / lanes * 100) + "% + 2px)"; b.style.width = "calc(" + (100 / lanes) + "% - 4px)";
       col.appendChild(b);
     });
@@ -338,12 +358,19 @@ $("form").onsubmit = e => {
   save(); closeForm(); render();
 };
 
-/* ===== backup ===== */
-$("bk-toggle").onclick = () => {
-  const b = $("backup"), open = !b.classList.contains("open");
-  b.classList.toggle("open", open);
-  if (open){ $("bk-text").value = JSON.stringify({ v: 1, events }); $("bk-msg").textContent = ""; }
+/* ===== settings (visible hours + backup) ===== */
+$("gear").onclick = () => {
+  const open = !$("set").classList.contains("open");
+  $("set").classList.toggle("open", open); $("gear").classList.toggle("on", open);
+  if (open){ $("s-from").value = START_HOUR; $("s-to").value = END_HOUR; $("bk-text").value = JSON.stringify({ v: 1, events }); $("bk-msg").textContent = ""; }
 };
+["s-from", "s-to"].forEach(id => $(id).onchange = () => {
+  const a = Math.round(+$("s-from").value), b = Math.round(+$("s-to").value);
+  if (!(a >= 0 && b <= 24 && a < b)){ $("s-msg").textContent = "invalid range"; return; }
+  START_HOUR = a; END_HOUR = b; $("s-msg").textContent = "saved";
+  try { localStorage.setItem("home-tt-range", JSON.stringify([a, b])); } catch(e){}
+  render();
+});
 $("bk-restore").onclick = () => {
   try {
     const d = JSON.parse($("bk-text").value);

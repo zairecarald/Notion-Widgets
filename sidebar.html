@@ -14,6 +14,21 @@
   main{min-height:100%;padding:12px 10px 18px;display:flex;flex-direction:column;gap:16px}
   h2{font-size:10px;letter-spacing:2px;font-weight:700;color:var(--muted);margin:2px 2px 0}
   .sec{display:grid;gap:8px}
+  .sech{display:flex;justify-content:space-between;align-items:center}
+  .sech h2{margin:2px 2px 0}
+  .gear{background:transparent;border:1px solid var(--line);border-radius:14px;width:30px;height:25px;display:grid;place-content:center;cursor:pointer;color:var(--muted)}
+  .gear:hover{border-color:var(--muted);color:var(--text)}
+  .gear.on{color:var(--accent);border-color:var(--accent)}
+  .qedit{display:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px;gap:6px;flex-direction:column}
+  .qedit.open{display:flex}
+  .qe{display:flex;gap:4px;align-items:center}
+  .qe input{min-width:0;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:11px;padding:5px 6px;outline:none}
+  .qe input:focus{border-color:var(--accent)}
+  .qe .n{flex:1}.qe .u{flex:1.4}
+  .qe button{background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--text);font:inherit;font-size:11px;padding:4px 7px;cursor:pointer}
+  .qe button:hover{border-color:var(--muted)}
+  .qhint{font-size:10px;color:var(--muted);padding:0 2px}
+
   #groups{flex:1;display:flex;flex-direction:column;gap:14px}
 
   /* quick-action */
@@ -64,7 +79,7 @@
 </head>
 <body>
 <main>
-  <section class="sec"><h2>QUICK-ACTION</h2><div class="quick" id="quick"></div></section>
+  <section class="sec"><div class="sech"><h2>QUICK-ACTION</h2><button class="gear" id="gear" title="edit quick actions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button></div><div class="quick" id="quick"></div><div class="qedit" id="qedit"></div></section>
   <section class="sec"><h2>GOAL TRACKER</h2><div id="goals" class="sec"></div></section>
   <section id="groups"></section>
   <div id="warn">this browser doesn't allow saving data here: goal progress will be lost on reload</div>
@@ -89,11 +104,11 @@ const GOALS = [
    { name, url }                      opens a link in a new tab
    { name, bump: { goal, by } }       adds "by" to a count goal (e.g. +1 French term)
    ==================================================================== */
-const QUICK = [
+const QUICK_DEFAULT = [
   { name: "New page",         url: "https://www.notion.so/new" },
-  { name: "New journal entry", url: "https://app.notion.com/p/4235cfe181fd81da9624c99e8c0a7da6" },
-  { name: "+1 French term",   bump: { goal: "french", by: 1 } }
+  { name: "New journal entry", url: "https://app.notion.com/p/4235cfe181fd81da9624c99e8c0a7da6" }
 ];
+/* the settings button (top right of QUICK-ACTION) lets you edit this list without touching the code */
 
 /* ====================================================================
    PAGE GROUPS: add or remove lines freely.
@@ -226,6 +241,27 @@ function renderGroups(){
     box.appendChild(el("div", { class: "group" }, h, items));
   });
 }
+let QUICK = QUICK_DEFAULT;
+try { const q = JSON.parse(localStorage.getItem("home-quick")); if (Array.isArray(q) && q.every(x => x && typeof x.name === "string" && typeof x.url === "string")) QUICK = q; } catch(e){}
+function saveQuick(){ try { localStorage.setItem("home-quick", JSON.stringify(QUICK)); } catch(e){ $("warn").style.display = "block"; } }
+function renderQEdit(){
+  const box = $("qedit"); box.textContent = "";
+  QUICK.forEach((q, i) => {
+    const n = el("input", { class: "n", type: "text", value: q.name, maxlength: "30", placeholder: "name" });
+    const u = el("input", { class: "u", type: "text", value: q.url || "", placeholder: "link" });
+    n.onchange = () => { q.name = n.value.trim() || q.name; saveQuick(); renderQuick(); };
+    u.onchange = () => { q.url = u.value.trim(); saveQuick(); renderQuick(); };
+    box.appendChild(el("div", { class: "qe" }, n, u, el("button", { text: "x", title: "remove", onclick: () => { QUICK.splice(i, 1); saveQuick(); renderQuick(); renderQEdit(); } })));
+  });
+  const nn = el("input", { class: "n", type: "text", maxlength: "30", placeholder: "new name" });
+  const nu = el("input", { class: "u", type: "text", placeholder: "link" });
+  box.appendChild(el("div", { class: "qe" }, nn, nu, el("button", { text: "+", title: "add", onclick: () => {
+    if (!nn.value.trim() || !/^https?:\/\//.test(nu.value.trim())){ nn.focus(); return; }
+    QUICK.push({ name: nn.value.trim(), url: nu.value.trim() }); saveQuick(); renderQuick(); renderQEdit();
+  } })));
+  box.appendChild(el("div", { class: "qhint", text: "Links must start with https://" }));
+}
+$("gear").onclick = () => { const o = !$("qedit").classList.contains("open"); $("qedit").classList.toggle("open", o); $("gear").classList.toggle("on", o); if (o) renderQEdit(); };
 renderQuick(); renderGoals(); renderGroups();
 window.addEventListener("storage", e => {
   if (e.key === STORE){ try { state = JSON.parse(e.newValue) || {}; } catch(x){ state = {}; } renderGoals(); }

@@ -16,6 +16,15 @@
   .top h2{font-size:11px;letter-spacing:2px;font-weight:700;color:var(--muted)}
   .pill{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:14px;font:inherit;font-size:10px;letter-spacing:1px;padding:4px 11px;cursor:pointer}
   .pill:hover{border-color:var(--muted)}
+  .gear{background:transparent;border:1px solid var(--line);border-radius:14px;width:30px;height:25px;display:grid;place-content:center;cursor:pointer;color:var(--muted)}
+  .gear:hover{border-color:var(--muted);color:var(--text)}
+  .gear.on{color:var(--accent);border-color:var(--accent)}
+  .rt{display:flex;gap:8px;align-items:center}
+  .ibtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;display:grid;place-content:center;font:inherit;font-weight:800;font-size:14px;padding:0}
+  .ibtn:hover{border-color:var(--muted)}
+  .ibtn.on{color:var(--c0);border-color:var(--c0);background:color-mix(in srgb,var(--c0) 14%,var(--bg))}
+  .icons{display:flex;gap:6px;flex-wrap:wrap}
+  .ico svg{width:20px;height:20px}
   .pill.danger{color:var(--warn);border-color:var(--warn)}
 
   /* form */
@@ -88,7 +97,7 @@
 </head>
 <body>
 <main>
-  <div class="top"><h2>HABITS</h2><button class="pill" id="new">+ NEW</button></div>
+  <div class="top"><h2>HABITS</h2><div class="rt"><button class="gear" id="gear" title="settings (backup)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button><button class="pill" id="new">+ NEW</button></div></div>
 
   <form class="form" id="form" autocomplete="off">
     <div class="row">
@@ -97,16 +106,15 @@
         <select id="f-goal"></select></div>
     </div>
     <div><label>DESCRIPTION (optional)</label><input type="text" id="f-desc" maxlength="70" placeholder="e.g. At least 15 minutes"></div>
+    <div><label>ICON</label><div class="icons" id="f-ic"></div></div>
     <div><label>COLOR</label><div class="swatches" id="f-sw"></div></div>
     <div class="btns"><button type="submit" class="btn" id="f-save">SAVE</button><button type="button" class="btn ghost" id="f-cancel">CANCEL</button></div>
   </form>
 
   <div id="list"></div>
 
-  <div class="foot">
-    <button class="pill" id="bk-toggle">BACKUP</button>
-  </div>
   <div class="backup" id="backup">
+    <div class="hint" style="margin:0;letter-spacing:1.5px">SETTINGS / BACKUP</div>
     <div class="hint">Copy this text and keep it wherever you like. To restore your data or move it to another browser, paste it here and press RESTORE.</div>
     <textarea id="bk-text" spellcheck="false"></textarea>
     <div class="btns"><button class="btn ghost" id="bk-restore">RESTORE</button><span class="hint" id="bk-msg" style="align-self:center;margin:0"></span></div>
@@ -116,14 +124,32 @@
 
 <script>
 /* ===== CONFIG ===== */
-const COLORS = { violet:"#8e8bf0", amber:"#e0a35a", cyan:"#5cc4dc", green:"#7fbf8a", rose:"#d4907c", beige:"#c4c2ac" };
-const LEGACY_COLORS = { violeta:"violet", ambar:"amber", cian:"cyan", verde:"green", rosa:"rose" };  // names used by older saved data
+/* Only two colours for now, to test the palette. Add more here later. */
+const COLORS = { rose:"#d4907c", cyan:"#5cc4dc" };
+const LEGACY_COLORS = { violeta:"cyan", ambar:"rose", cian:"cyan", verde:"cyan", rosa:"rose", violet:"cyan", amber:"rose", green:"cyan", beige:"rose" };  // older names / removed colours
+/* Icons: simple 24x24 line drawings. Add your own by adding a line (name: svg inner markup). */
+const ICONS = {
+  book:   '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M6.5 17a2.5 2.5 0 0 0 0 4H20v-4"/>',
+  cap:    '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/>',
+  pen:    '<path d="M17 3l4 4L7 21H3v-4z"/>',
+  chat:   '<path d="M21 12a8 8 0 0 1-11.5 7.2L3 21l1.8-6A8 8 0 1 1 21 12z"/>',
+  globe:  '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  code:   '<path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>',
+  music:  '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  dumbbell:'<path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/>',
+  heart:  '<path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 22l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>',
+  drop:   '<path d="M12 2.7S5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.7 12 2.7z"/>',
+  moon:   '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  star:   '<path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/>'
+};
+const svgIcon = k => { const d = document.createElementNS("http://www.w3.org/2000/svg", "svg"); d.setAttribute("viewBox", "0 0 24 24"); d.setAttribute("fill", "none"); d.setAttribute("stroke", "currentColor"); d.setAttribute("stroke-width", "2"); d.setAttribute("stroke-linecap", "round"); d.setAttribute("stroke-linejoin", "round"); d.innerHTML = ICONS[k]; return d; };
 const WEEKS = 26;                 // weeks shown in the grid
 const STORE = "home-habits";
 const SEED = [
-  { name:"Languages", desc:"Practice for at least 15 minutes", goal:5, color:"violet" },
-  { name:"Reading",   desc:"Read for a while every day",       goal:7, color:"cyan"   },
-  { name:"Practice",  desc:"A skill I want to improve",        goal:3, color:"amber"  }
+  { name:"Languages", desc:"Practice for at least 15 minutes", goal:5, color:"cyan", icon:"chat" },
+  { name:"Reading",   desc:"Read for a while every day",       goal:7, color:"rose", icon:"book" },
+  { name:"Practice",  desc:"A skill I want to improve",        goal:3, color:"cyan", icon:"target" }
 ];
 // untouched Spanish starter habits from the first version get translated automatically
 const SEED_ES = { "Idiomas|Practicar al menos 15 minutos":0, "Lectura|Leer un rato cada día":1, "Práctica|Una skill que quiera mejorar":2 };
@@ -161,14 +187,14 @@ function load(){
   try { data = raw ? JSON.parse(raw) : null; } catch(e){}
   if (data && Array.isArray(data.habits)){ habits = data.habits; if (migrate()) save(); }
   else if (!rd(STORE + "-seeded")){
-    habits = SEED.map(s => ({ id: uid(), name: s.name, desc: s.desc, goal: s.goal, color: s.color, days: {} }));
+    habits = SEED.map(s => ({ id: uid(), name: s.name, desc: s.desc, goal: s.goal, color: s.color, icon: s.icon, days: {} }));
     wr(STORE + "-seeded", "1"); save();
   }
 }
 function migrate(){
   let changed = false;
   habits.forEach(h => {
-    if (LEGACY_COLORS[h.color]){ h.color = LEGACY_COLORS[h.color]; changed = true; }
+    if (!COLORS[h.color]){ h.color = LEGACY_COLORS[h.color] || "rose"; changed = true; }
     const si = SEED_ES[h.name + "|" + h.desc];
     if (si !== undefined){ h.name = SEED[si].name; h.desc = SEED[si].desc; changed = true; }
   });
@@ -209,16 +235,20 @@ function render(){
   habits.forEach(h => list.appendChild(card(h)));
 }
 
+function iconEl(h){
+  if (ICONS[h.icon]) return el("div", { class: "ico" }, svgIcon(h.icon));
+  return el("div", { class: "ico", text: (h.name || "?").trim().charAt(0) });
+}
 function card(h){
   const c = el("div", { class: "card" });
-  c.style.setProperty("--c", COLORS[h.color] || COLORS.violet);
+  c.style.setProperty("--c", COLORS[h.color] || COLORS.rose);
   const tk = keyOf(today());
 
   const check = el("button", { class: "check" + (h.days[tk] ? " on" : ""), title: h.days[tk] ? "unmark today" : "mark today as done",
     onclick: () => { toggle(h, tk); } });
   const meta = el("div", { class: "meta", onclick: () => { openId = openId === h.id ? null : h.id; render(); } },
     el("b", { text: h.name }), el("span", { text: h.desc || " " }));
-  c.appendChild(el("div", { class: "head" }, el("div", { class: "ico", text: (h.name || "?").trim().charAt(0) }), meta, check));
+  c.appendChild(el("div", { class: "head" }, iconEl(h), meta, check));
 
   // contribution-style grid: columns = weeks, rows = Monday to Sunday
   const heat = el("div", { class: "heat", onclick: () => { openId = openId === h.id ? null : h.id; render(); } });
@@ -287,13 +317,22 @@ function toggle(h, k){
 
 /* ===== form ===== */
 for (let i = 1; i <= 7; i++) $("f-goal").appendChild(el("option", { value: i, text: i === 7 ? "7 (every day)" : String(i) }));
-let formColor = "violet";
+let formColor = "rose", formIcon = "letter";
 function drawSwatches(){
   const box = $("f-sw"); box.textContent = "";
   Object.keys(COLORS).forEach(n => {
     const b = el("button", { type: "button", class: "sw" + (n === formColor ? " on" : ""), title: n,
-      onclick: () => { formColor = n; drawSwatches(); } });
+      onclick: () => { formColor = n; drawSwatches(); drawIcons(); } });
     b.style.background = COLORS[n]; box.appendChild(b);
+  });
+}
+function drawIcons(){
+  const box = $("f-ic"); box.textContent = "";
+  box.style.setProperty("--c0", COLORS[formColor] || COLORS.rose);
+  box.appendChild(el("button", { type: "button", class: "ibtn" + (formIcon === "letter" ? " on" : ""), title: "first letter of the name", text: "A", onclick: () => { formIcon = "letter"; drawIcons(); } }));
+  Object.keys(ICONS).forEach(k => {
+    const b = el("button", { type: "button", class: "ibtn" + (formIcon === k ? " on" : ""), title: k, onclick: () => { formIcon = k; drawIcons(); } });
+    const sv = svgIcon(k); sv.setAttribute("width", "18"); sv.setAttribute("height", "18"); b.appendChild(sv); box.appendChild(b);
   });
 }
 function openForm(h){
@@ -301,9 +340,10 @@ function openForm(h){
   $("f-name").value = h ? h.name : "";
   $("f-desc").value = h ? h.desc : "";
   $("f-goal").value = h ? h.goal : 5;
-  formColor = h ? h.color : Object.keys(COLORS)[habits.length % Object.keys(COLORS).length];
+  formColor = h ? (COLORS[h.color] ? h.color : "rose") : Object.keys(COLORS)[habits.length % Object.keys(COLORS).length];
+  formIcon = h && ICONS[h.icon] ? h.icon : "letter";
   $("f-save").textContent = h ? "UPDATE" : "SAVE";
-  drawSwatches();
+  drawSwatches(); drawIcons();
   $("form").classList.add("open");
   $("f-name").focus();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -315,16 +355,16 @@ $("form").onsubmit = e => {
   e.preventDefault();
   const name = $("f-name").value.trim();
   if (!name){ $("f-name").focus(); return; }
-  const data = { name, desc: $("f-desc").value.trim(), goal: +$("f-goal").value, color: formColor };
+  const data = { name, desc: $("f-desc").value.trim(), goal: +$("f-goal").value, color: formColor, icon: formIcon };
   if (editingId){ Object.assign(habits.find(h => h.id === editingId), data); }
   else { const h = { id: uid(), days: {}, ...data }; habits.push(h); openId = null; }
   save(); closeForm(); render();
 };
 
 /* ===== backup ===== */
-$("bk-toggle").onclick = () => {
+$("gear").onclick = () => {
   const b = $("backup"), open = !b.classList.contains("open");
-  b.classList.toggle("open", open);
+  b.classList.toggle("open", open); $("gear").classList.toggle("on", open);
   if (open){ $("bk-text").value = JSON.stringify({ v: 1, habits }); $("bk-msg").textContent = ""; }
 };
 $("bk-restore").onclick = () => {
@@ -332,7 +372,7 @@ $("bk-restore").onclick = () => {
     const d = JSON.parse($("bk-text").value);
     if (!d || !Array.isArray(d.habits)) throw new Error("formato");
     habits = d.habits.map(h => ({ id: h.id || uid(), name: String(h.name || "Habit"), desc: String(h.desc || ""),
-      goal: Math.min(7, Math.max(1, +h.goal || 5)), color: COLORS[h.color] ? h.color : (LEGACY_COLORS[h.color] || "violet"), days: h.days && typeof h.days === "object" ? h.days : {} }));
+      goal: Math.min(7, Math.max(1, +h.goal || 5)), icon: ICONS[h.icon] ? h.icon : "letter", color: COLORS[h.color] ? h.color : (LEGACY_COLORS[h.color] || "rose"), days: h.days && typeof h.days === "object" ? h.days : {} }));
     save(); render(); $("bk-msg").textContent = "restored";
   } catch(e){ $("bk-msg").textContent = "invalid text, nothing was changed"; }
 };

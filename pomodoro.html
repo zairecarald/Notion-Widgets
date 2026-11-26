@@ -14,6 +14,9 @@
 
   .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;min-height:25px}
   .top h2{font-size:11px;letter-spacing:2px;font-weight:700;color:var(--muted)}
+  .gear{background:transparent;border:1px solid var(--line);border-radius:14px;width:30px;height:25px;display:grid;place-content:center;cursor:pointer;color:var(--muted)}
+  .gear:hover{border-color:var(--muted);color:var(--text)}
+  .gear.on{color:var(--accent);border-color:var(--accent)}
 
   .card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px 14px 14px;text-align:center}
   .modes{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
@@ -28,12 +31,20 @@
   .ctrl button{font:inherit;cursor:pointer;border-radius:6px}
   #go{background:var(--text);color:var(--bg);border:0;font-weight:800;font-size:15px;padding:9px 30px;min-width:104px}
   #reset{background:transparent;color:var(--text);border:1px solid var(--line);font-size:15px;padding:8px 12px}
+  .sp{display:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px;margin-bottom:12px;gap:10px;flex-direction:column}
+  .sp.open{display:flex}
+  .sp label{font-size:10px;letter-spacing:1.5px;color:var(--muted)}
+  .sp .r{display:flex;gap:8px;align-items:center}
+  .sp input{width:64px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:12px;padding:6px 8px;outline:none;text-align:center}
+  .sp input:focus{border-color:var(--accent)}
+  .sp small{font-size:10px;color:var(--muted)}
   .meta{margin-top:14px;font-size:11px;color:var(--muted);letter-spacing:1px}
 </style>
 </head>
 <body>
 <main>
-  <div class="top"><h2>POMODORO</h2></div>
+  <div class="top"><h2>POMODORO</h2><button class="gear" id="gear" title="settings"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button></div>
+  <div class="sp" id="sp"><label>DURATIONS (MINUTES)</label><div class="r"><input type="number" id="d0" min="1" max="180"><input type="number" id="d1" min="1" max="180"><input type="number" id="d2" min="1" max="180"><small id="dmsg"></small></div></div>
   <div class="card">
     <div class="modes" id="modes"></div>
     <div id="time">20:00</div>
@@ -47,7 +58,8 @@
 /* Durations in minutes. Change them here, or in the URL: pomodoro.html?d=15,25,45 */
 const q = new URLSearchParams(location.search);
 const fromUrl = (q.get("d") || "").split(",").map(Number).filter(n => n > 0);
-const DURATIONS = fromUrl.length === 3 ? fromUrl : [10, 20, 30];
+function savedDurs(){ const a = (get("pomo-durs") || "").split(",").map(Number); return a.length === 3 && a.every(n => n > 0 && n <= 180) ? a : null; }
+let DURATIONS = fromUrl.length === 3 ? fromUrl : (savedDurs() || [10, 20, 30]);
 
 const $ = s => document.querySelector(s);
 const pad = n => String(n).padStart(2, "0");
@@ -60,12 +72,16 @@ if (idx < 0) idx = 1;
 let total = DURATIONS[idx] * 60, left = total, endAt = null, timer = null;
 let done = get("pomo-date") === today ? +get("pomo-count") || 0 : 0;
 
-DURATIONS.forEach((m, i) => {
-  const b = document.createElement("button");
-  b.textContent = m; b.title = m + " minutes";
-  b.onclick = () => pick(i);
-  $("#modes").appendChild(b);
-});
+function drawModes(){
+  $("#modes").textContent = "";
+  DURATIONS.forEach((m, i) => {
+    const b = document.createElement("button");
+    b.textContent = m; b.title = m + " minutes";
+    b.onclick = () => pick(i);
+    $("#modes").appendChild(b);
+  });
+}
+drawModes();
 
 function render(){
   $("#time").textContent = pad(Math.floor(left / 60)) + ":" + pad(left % 60);
@@ -107,6 +123,17 @@ function start(){
   }, 250);
   render();
 }
+$("#gear").onclick = () => {
+  const open = !$("#sp").classList.contains("open");
+  $("#sp").classList.toggle("open", open); $("#gear").classList.toggle("on", open);
+  if (open) DURATIONS.forEach((m, i) => { $("#d" + i).value = m; });
+};
+[0, 1, 2].forEach(i => $("#d" + i).onchange = () => {
+  const a = [0, 1, 2].map(k => Math.round(+$("#d" + k).value));
+  if (!a.every(n => n > 0 && n <= 180)){ $("#dmsg").textContent = "1 to 180"; return; }
+  $("#dmsg").textContent = "saved"; DURATIONS = a; set("pomo-durs", a.join(","));
+  idx = Math.min(idx, 2); stop(); total = left = DURATIONS[idx] * 60; drawModes(); render();
+});
 $("#go").onclick = () => timer ? (stop(), render()) : start();
 $("#reset").onclick = () => { stop(); left = total; render(); };
 render();

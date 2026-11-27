@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>home · panel</title>
+<style>
+  :root{--bg:#191919;color-scheme:dark}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);height:100%}
+  /* pomodoro + music stacked on the left, habits on the right, same top and same bottom */
+  .grid{display:grid;grid-template-columns:48fr 52fr;gap:0 28px;padding:12px 16px 18px;align-items:start}
+  .left{display:flex;flex-direction:column;gap:22px}
+  iframe{display:block;width:100%;border:0;background:var(--bg);color-scheme:dark}
+  @media (max-width:760px){ .grid{grid-template-columns:1fr;gap:22px} }
+</style>
+</head>
+<body>
+<div class="grid">
+  <div class="left">
+    <iframe id="f-pomo" title="pomodoro" height="280"></iframe>
+    <iframe id="f-music" title="music" height="300" allow="autoplay; encrypted-media; fullscreen"></iframe>
+  </div>
+  <iframe id="f-habits" title="habits" height="600"></iframe>
+</div>
+<script>
+/* Bump V when you upload a new version of any of the three widgets, so Notion does not show the old one. */
+const V = 1;
+const $ = id => document.getElementById(id);
+$("f-pomo").src = "pomodoro.html?v=" + V;
+$("f-music").src = "music.html?v=" + V;
+$("f-habits").src = "habitos.html?v=" + V;
+
+const CSS = {
+  base: "main{padding:0 !important;max-width:none !important}html,body{overflow:hidden}",
+  habits: "html,body{height:100%}main{min-height:100%;display:flex;flex-direction:column}#list{flex:1;display:flex;flex-direction:column;gap:12px}#list>.card{flex:1}"
+};
+const wide = () => !matchMedia("(max-width:760px)").matches;
+const mainH = f => { try { return Math.ceil(f.contentDocument.querySelector("main").getBoundingClientRect().height); } catch(e){ return 0; } };
+
+function fit(){
+  const p = $("f-pomo"), m = $("f-music"), h = $("f-habits");
+  const hp = mainH(p), hm = mainH(m);
+  if (hp) p.style.height = hp + "px";
+  if (hm) m.style.height = hm + "px";
+  if (wide()){
+    if (hp && hm) h.style.height = (hp + hm + 22) + "px";
+    h.contentDocument && h.contentDocument.documentElement && (h.contentDocument.documentElement.style.overflowY = "auto");
+  } else {
+    const hh = mainH(h); if (hh) h.style.height = hh + "px";
+  }
+}
+function wire(f, extra, watch){
+  f.addEventListener("load", () => {
+    try {
+      const d = f.contentDocument, st = d.createElement("style");
+      st.textContent = CSS.base + (extra || ""); d.head.appendChild(st);
+      const mn = d.querySelector("main");
+      if (watch && mn) new f.contentWindow.ResizeObserver(fit).observe(mn);
+      if (!watch && mn) new f.contentWindow.ResizeObserver(fit).observe(mn);
+    } catch(e){}
+    fit();
+  });
+}
+wire($("f-pomo"), "", true);
+wire($("f-music"), "", true);
+wire($("f-habits"), CSS.habits, false);
+addEventListener("resize", fit);
+setTimeout(fit, 800); setTimeout(fit, 2500);
+</script>
+</body>
+</html>

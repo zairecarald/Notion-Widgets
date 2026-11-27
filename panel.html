@@ -26,10 +26,11 @@
 <script>
 /* Bump V when you upload a new version of any of the three widgets, so Notion does not show the old one. */
 const V = 1;
+const BASE = "https://zairecarald.github.io/Notion-Widgets/";   // where the three widget files live
 const $ = id => document.getElementById(id);
-$("f-pomo").src = "pomodoro.html?v=" + V;
-$("f-music").src = "music.html?v=" + V;
-$("f-habits").src = "habitos.html?v=" + V;
+$("f-pomo").src = BASE + "pomodoro.html?v=" + V;
+$("f-music").src = BASE + "music.html?v=" + V;
+$("f-habits").src = BASE + "habitos.html?v=" + V;
 
 const CSS = {
   base: "main{padding:0 !important;max-width:none !important}html,body{overflow:hidden}",

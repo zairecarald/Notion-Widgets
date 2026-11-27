@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>home · pomodoro</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ====== PALETTE (same as the other widgets) ====== */
+  :root{--bg:#191919;--panel:#202020;--line:#3a3a38;--text:#e8e6df;--muted:#8d8b84;--bar:#c4c2ac;--accent:#529cca;--pf:var(--bar);--pt:var(--text);--pb:var(--bg)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+  main{padding:12px 16px 18px}
+
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;min-height:25px}
+  .top h2{font-size:11px;letter-spacing:2px;font-weight:700;color:var(--muted)}
+  .gear{background:transparent;border:1px solid var(--line);border-radius:14px;width:30px;height:25px;display:grid;place-content:center;cursor:pointer;color:var(--muted)}
+  .gear:hover{border-color:var(--muted);color:var(--text)}
+  .gear.on{color:var(--accent);border-color:var(--accent)}
+
+  .card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px 14px 14px;text-align:center}
+  .modes{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+  .modes button{min-width:58px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:20px;
+                font:inherit;font-size:12px;padding:5px 14px;cursor:pointer}
+  .modes button:hover{border-color:var(--muted)}
+  .modes button.on{color:var(--pb);background:var(--pt);border-color:var(--pt);font-weight:700}
+  #time{font-size:clamp(54px,18vw,84px);font-weight:800;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums}
+  .track{height:6px;border-radius:3px;border:1px solid var(--line);margin:16px 0;overflow:hidden}
+  .track i{display:block;height:100%;width:0;background:var(--pf);transition:width .5s linear}
+  .ctrl{display:flex;gap:10px;justify-content:center;align-items:center}
+  .ctrl button{font:inherit;cursor:pointer;border-radius:6px}
+  #go{background:var(--pt);color:var(--pb);border:0;font-weight:800;font-size:15px;padding:9px 30px;min-width:104px}
+  #reset{background:transparent;color:var(--text);border:1px solid var(--line);font-size:15px;padding:8px 12px}
+  .sp{display:none;gap:12px;flex-direction:column;text-align:left}
+  .card.set .sp{display:flex}
+  .card.set > :not(.sp){display:none}
+  .sp label{font-size:10px;letter-spacing:1.5px;color:var(--muted)}
+  .sp .r{display:flex;gap:8px;align-items:center}
+  .sp .sw{width:22px;height:22px;border-radius:6px;border:2px solid transparent;cursor:pointer;padding:0}
+  .sp .sw.on{border-color:var(--text)}
+  .sp .ib{background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--text);font:inherit;font-size:12px;width:28px;height:30px;cursor:pointer}
+  .sp .ib:hover{border-color:var(--muted)}
+  .sp input{width:64px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:12px;padding:6px 8px;outline:none;text-align:center}
+  .sp input:focus{border-color:var(--accent)}
+  .sp small{font-size:10px;color:var(--muted)}
+  .meta{margin-top:14px;font-size:11px;color:var(--muted);letter-spacing:1px}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><h2>POMODORO</h2><button class="gear" id="gear" title="settings"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button></div>
+  <div class="card" id="card">
+    <div class="sp" id="sp"><label>TIME OPTIONS (MINUTES)</label><div class="r" id="dlist"></div><label>COLOR</label><div class="r" id="colsw"></div></div>
+    <div class="modes" id="modes"></div>
+    <div id="time">20:00</div>
+    <div class="track"><i id="prog"></i></div>
+    <div class="ctrl"><button id="go">Start</button><button id="reset" title="reset">&#8634;</button></div>
+    <div class="meta" id="meta">SESSIONS TODAY: 0</div>
+  </div>
+</main>
+
+<script>
+/* Durations in minutes. Change them here, or in the URL: pomodoro.html?d=15,25,45 */
+const q = new URLSearchParams(location.search);
+const fromUrl = (q.get("d") || "").split(",").map(Number).filter(n => n > 0);
+function savedDurs(){ const a = (get("pomo-durs") || "").split(",").map(Number); return a.length >= 1 && a.length <= 5 && a.every(n => n > 0 && n <= 180) ? a : null; }
+let DURATIONS = fromUrl.length >= 1 && fromUrl.length <= 5 ? fromUrl : (savedDurs() || [10, 20, 30]);
+
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, "0");
+const today = new Date().toISOString().slice(0, 10);
+function get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function set(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+
+let idx = DURATIONS.indexOf(+get("pomo-min"));
+if (idx < 0) idx = 1;
+let total = DURATIONS[idx] * 60, left = total, endAt = null, timer = null;
+let done = get("pomo-date") === today ? +get("pomo-count") || 0 : 0;
+
+function drawModes(){
+  $("#modes").textContent = "";
+  DURATIONS.forEach((m, i) => {
+    const b = document.createElement("button");
+    b.textContent = m; b.title = m + " minutes";
+    b.onclick = () => pick(i);
+    $("#modes").appendChild(b);
+  });
+}
+drawModes();
+
+function render(){
+  $("#time").textContent = pad(Math.floor(left / 60)) + ":" + pad(left % 60);
+  $("#prog").style.width = ((total - left) / total * 100) + "%";
+  $("#go").textContent = timer ? "Pause" : (left < total ? "Resume" : "Start");
+  $("#meta").textContent = "SESSIONS TODAY: " + done;
+  document.querySelectorAll(".modes button").forEach((b, i) => b.classList.toggle("on", i === idx));
+  document.title = (timer ? pad(Math.floor(left / 60)) + ":" + pad(left % 60) + " · " : "") + "pomodoro";
+}
+function beep(){
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .25, .5].forEach(t => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(.18, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + t + .2);
+      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + .22);
+    });
+  } catch(e){}
+}
+function stop(){ clearInterval(timer); timer = null; }
+function finish(){
+  stop(); beep();
+  done++; set("pomo-date", today); set("pomo-count", done);
+  left = total; render();
+}
+function pick(i){
+  stop(); idx = i; total = left = DURATIONS[i] * 60;
+  set("pomo-min", DURATIONS[i]);
+  render();
+}
+function start(){
+  endAt = Date.now() + left * 1000;
+  timer = setInterval(() => {
+    left = Math.max(0, Math.round((endAt - Date.now()) / 1000));
+    render();
+    if (left === 0) finish();
+  }, 250);
+  render();
+}
+const PCOL = { default: null, rose: "#d4907c", cyan: "#5cc4dc" };
+function applyColor(){
+  const n = get("pomo-color") || "default", hex = PCOL[n] || null, r = document.documentElement.style;
+  r.setProperty("--pf", hex || "var(--bar)"); r.setProperty("--pt", hex || "var(--text)");
+  const box = $("#colsw"); box.textContent = "";
+  Object.keys(PCOL).forEach(k => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "sw" + (k === n ? " on" : ""); b.title = k;
+    b.style.background = PCOL[k] || "linear-gradient(135deg,var(--text) 50%,var(--bar) 50%)";
+    b.onclick = () => { set("pomo-color", k); applyColor(); };
+    box.appendChild(b);
+  });
+}
+function applyDurs(a){
+  DURATIONS = a; set("pomo-durs", a.join(","));
+  idx = Math.min(idx, a.length - 1); stop(); total = left = DURATIONS[idx] * 60; set("pomo-min", DURATIONS[idx]);
+  drawModes(); render(); drawSettings();
+}
+function drawSettings(){
+  const box = $("#dlist"); box.textContent = "";
+  DURATIONS.forEach((m, i) => {
+    const inp = document.createElement("input"); inp.type = "number"; inp.min = 1; inp.max = 180; inp.value = m;
+    inp.onchange = () => { const v = Math.round(+inp.value); if (!(v > 0 && v <= 180)){ inp.value = DURATIONS[i]; return; } const a = [...DURATIONS]; a[i] = v; applyDurs(a); };
+    box.appendChild(inp);
+    if (DURATIONS.length > 1){
+      const x = document.createElement("button"); x.className = "ib"; x.textContent = "x"; x.title = "remove";
+      x.onclick = () => { const a = [...DURATIONS]; a.splice(i, 1); applyDurs(a); };
+      box.appendChild(x);
+    }
+  });
+  if (DURATIONS.length < 5){
+    const add = document.createElement("button"); add.className = "ib"; add.textContent = "+"; add.title = "add an option";
+    add.onclick = () => applyDurs([...DURATIONS, Math.min(180, DURATIONS[DURATIONS.length - 1] + 10)]);
+    box.appendChild(add);
+  }
+}
+$("#gear").onclick = () => {
+  const card = $("#card"), open = !card.classList.contains("set");
+  card.style.minHeight = open ? card.offsetHeight + "px" : "";
+  card.classList.toggle("set", open); $("#gear").classList.toggle("on", open);
+  if (open) drawSettings();
+};
+applyColor();
+$("#go").onclick = () => timer ? (stop(), render()) : start();
+$("#reset").onclick = () => { stop(); left = total; render(); };
+render();
+</script>
+</body>
+</html>
